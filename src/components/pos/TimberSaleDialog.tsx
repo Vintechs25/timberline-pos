@@ -61,7 +61,7 @@ export function TimberSaleDialog({ wood, open, onOpenChange, onAdd }: Props) {
 
   return (
     <Dialog open={open} onOpenChange={onOpenChange}>
-      <DialogContent className="max-w-xl">
+      <DialogContent className="max-w-xl max-h-[90vh] overflow-y-auto">
         <DialogHeader>
           <DialogTitle className="flex items-center gap-2 text-xl">
             <TreePine className="h-5 w-5 text-timber" />
