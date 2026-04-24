@@ -2,14 +2,15 @@ import { Link, useLocation } from "@tanstack/react-router";
 import { LayoutDashboard, ShoppingCart, Package, TreePine, Users, BarChart3 } from "lucide-react";
 import { cn } from "@/lib/utils";
 
-const nav = [
+type NavItem = { to: string; label: string; icon: typeof LayoutDashboard; highlight?: boolean };
+const nav: NavItem[] = [
   { to: "/", label: "Dashboard", icon: LayoutDashboard },
   { to: "/pos", label: "Point of Sale", icon: ShoppingCart, highlight: true },
   { to: "/timber", label: "Timber Yard", icon: TreePine },
   { to: "/inventory", label: "Hardware", icon: Package },
   { to: "/customers", label: "Customers", icon: Users },
   { to: "/reports", label: "Reports", icon: BarChart3 },
-] as const;
+];
 
 export function AppShell({ children }: { children: React.ReactNode }) {
   const location = useLocation();
