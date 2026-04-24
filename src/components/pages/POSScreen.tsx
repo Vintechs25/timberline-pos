@@ -16,7 +16,9 @@ import {
   Smartphone,
   Receipt,
   CheckCircle2,
+  ShoppingBag,
 } from "lucide-react";
+import { Sheet, SheetContent, SheetTitle } from "@/components/ui/sheet";
 import { TimberSaleDialog } from "@/components/pos/TimberSaleDialog";
 import {
   Dialog,
