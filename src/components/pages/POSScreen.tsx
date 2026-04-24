@@ -119,10 +119,167 @@ export function POSScreen() {
     setConfirmOpen(true);
   }
 
+  const cartCount = cart.reduce((s, i) => s + i.quantity, 0);
+  const [mobileCartOpen, setMobileCartOpen] = useState(false);
+
+  const cartPanel = (
+    <>
+      <div className="border-b border-border p-4">
+        <div className="flex items-center justify-between mb-3">
+          <h2 className="text-sm font-bold uppercase tracking-wider text-muted-foreground">
+            Current Sale
+          </h2>
+          {cart.length > 0 && (
+            <Button variant="ghost" size="sm" onClick={clearCart}>
+              <X className="h-3 w-3 mr-1" /> Clear
+            </Button>
+          )}
+        </div>
+        <Select value={activeCustomerId} onValueChange={setCustomer}>
+          <SelectTrigger className="h-11">
+            <SelectValue />
+          </SelectTrigger>
+          <SelectContent>
+            {customers.map((c) => (
+              <SelectItem key={c.id} value={c.id}>
+                <div className="flex items-center gap-2">
+                  <span className="font-medium">{c.name}</span>
+                  {c.type === "contractor" && (
+                    <span className="text-[10px] uppercase font-bold text-accent">
+                      Contractor
+                    </span>
+                  )}
+                </div>
+              </SelectItem>
+            ))}
+          </SelectContent>
+        </Select>
+        {customer && customer.type === "contractor" && (
+          <div className="mt-2 flex items-center justify-between text-xs text-muted-foreground">
+            <span>Balance: {formatKsh(customer.balance)}</span>
+            <span>{customer.discountPct}% loyalty discount</span>
+          </div>
+        )}
+      </div>
+
+      <div className="flex-1 overflow-y-auto p-3 space-y-2">
+        {cart.length === 0 && (
+          <div className="flex flex-col items-center justify-center h-full text-center px-6 py-16">
+            <Receipt className="h-12 w-12 text-muted-foreground/40 mb-3" />
+            <p className="text-sm font-medium text-muted-foreground">Cart is empty</p>
+            <p className="text-xs text-muted-foreground/70 mt-1">
+              Tap items to add them.
+            </p>
+          </div>
+        )}
+        {cart.map((item) => (
+          <div key={item.lineId} className="rounded-lg border border-border bg-background p-3">
+            <div className="flex items-start justify-between gap-2 mb-1">
+              <div className="flex items-start gap-2 min-w-0">
+                {item.kind === "timber" ? (
+                  <TreePine className="h-4 w-4 text-timber flex-shrink-0 mt-0.5" />
+                ) : (
+                  <Package className="h-4 w-4 text-hardware flex-shrink-0 mt-0.5" />
+                )}
+                <div className="min-w-0">
+                  <div className="text-sm font-semibold text-foreground truncate">
+                    {item.name}
+                  </div>
+                  <div className="text-[11px] text-muted-foreground">{item.description}</div>
+                </div>
+              </div>
+              <button
+                onClick={() => removeCartItem(item.lineId)}
+                className="text-muted-foreground hover:text-destructive transition-colors p-1"
+                aria-label="Remove"
+              >
+                <Trash2 className="h-4 w-4" />
+              </button>
+            </div>
+            <div className="flex items-center justify-between mt-2">
+              <div className="flex items-center gap-1">
+                <Button
+                  variant="outline"
+                  size="icon"
+                  className="h-8 w-8"
+                  onClick={() => updateCartItem(item.lineId, Math.max(1, item.quantity - 1))}
+                >
+                  <Minus className="h-3.5 w-3.5" />
+                </Button>
+                <span className="w-12 text-center text-sm font-bold">
+                  {item.quantity}
+                  <span className="text-[10px] text-muted-foreground ml-1">
+                    {item.unitLabel}
+                  </span>
+                </span>
+                <Button
+                  variant="outline"
+                  size="icon"
+                  className="h-8 w-8"
+                  onClick={() => updateCartItem(item.lineId, item.quantity + 1)}
+                >
+                  <Plus className="h-3.5 w-3.5" />
+                </Button>
+              </div>
+              <div className="text-right">
+                <div className="text-sm font-bold">{formatKsh(item.total)}</div>
+                <div className="text-[10px] text-muted-foreground">
+                  @ {formatKsh(item.unitPrice)}
+                </div>
+              </div>
+            </div>
+          </div>
+        ))}
+      </div>
+
+      <div className="border-t border-border bg-card p-4 space-y-3">
+        <div className="flex items-center justify-between text-sm">
+          <span className="text-muted-foreground">Subtotal</span>
+          <span className="font-semibold">{formatKsh(subtotal)}</span>
+        </div>
+        <div className="flex items-center justify-between gap-2">
+          <span className="text-sm text-muted-foreground">Discount %</span>
+          <Input
+            type="number"
+            value={cartDiscountPct}
+            onChange={(e) => setDiscount(Number(e.target.value) || 0)}
+            className="h-8 w-20 text-right"
+            min={0}
+            max={100}
+          />
+        </div>
+        {totalDiscPct > 0 && (
+          <div className="flex justify-between text-xs text-success">
+            <span>Discount ({totalDiscPct}%)</span>
+            <span>−{formatKsh(discount)}</span>
+          </div>
+        )}
+        <div className="flex items-center justify-between border-t border-border pt-3">
+          <span className="text-base font-bold uppercase">Total</span>
+          <span className="text-2xl font-bold text-foreground">{formatKsh(total)}</span>
+        </div>
+        <Button
+          size="lg"
+          disabled={cart.length === 0}
+          onClick={() => {
+            setMobileCartOpen(false);
+            setPayOpen(true);
+          }}
+          className="w-full h-14 text-base font-bold bg-accent text-accent-foreground hover:bg-accent/90 shadow-[var(--shadow-elevated)]"
+        >
+          <Receipt className="mr-2 h-5 w-5" /> Pay {formatKsh(total)}
+        </Button>
+      </div>
+    </>
+  );
+
   return (
-    <div className="flex h-screen flex-col lg:flex-row">
-      {/* CART PANEL — left */}
-      <section className="flex w-full lg:w-[420px] flex-col border-r border-border bg-card">
+    <div className="flex min-h-[calc(100vh-7rem)] md:min-h-screen flex-col lg:flex-row">
+      {/* CART PANEL — desktop only */}
+      <section className="hidden lg:flex w-[420px] flex-col border-r border-border bg-card">
+        {cartPanel}
+      </section>
+
         <div className="border-b border-border p-4">
           <div className="flex items-center justify-between mb-3">
             <h2 className="text-sm font-bold uppercase tracking-wider text-muted-foreground">
