@@ -311,7 +311,7 @@ export function POSScreen() {
           </div>
         </div>
 
-        <div className="flex-1 overflow-y-auto p-4">
+        <div className="flex-1 lg:overflow-y-auto p-3 md:p-4 pb-28 lg:pb-4">{/* extra bottom padding for mobile FAB */}
           <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 xl:grid-cols-5 gap-3">
             {filteredTimber.map((w) => (
               <button
