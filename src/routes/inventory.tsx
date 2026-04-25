@@ -1,5 +1,6 @@
 import { createFileRoute } from "@tanstack/react-router";
 import { AppShell } from "@/components/layout/AppShell";
+import { RequireAuth } from "@/components/auth/RequireAuth";
 import { HardwareInventory } from "@/components/pages/HardwareInventory";
 
 export const Route = createFileRoute("/inventory")({
@@ -10,8 +11,10 @@ export const Route = createFileRoute("/inventory")({
     ],
   }),
   component: () => (
-    <AppShell>
-      <HardwareInventory />
-    </AppShell>
+    <RequireAuth>
+      <AppShell>
+        <HardwareInventory />
+      </AppShell>
+    </RequireAuth>
   ),
 });

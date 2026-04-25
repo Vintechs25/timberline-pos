@@ -1,15 +1,13 @@
 import { createFileRoute } from "@tanstack/react-router";
 import { AppShell } from "@/components/layout/AppShell";
+import { RequireAuth } from "@/components/auth/RequireAuth";
 import { Dashboard } from "@/components/pages/Dashboard";
 
 export const Route = createFileRoute("/")({
   head: () => ({
     meta: [
       { title: "TimberYard POS — Dashboard" },
-      {
-        name: "description",
-        content: "Daily overview for your hardware and timber yard business.",
-      },
+      { name: "description", content: "Daily overview for your hardware and timber yard business." },
     ],
   }),
   component: Index,
@@ -17,8 +15,10 @@ export const Route = createFileRoute("/")({
 
 function Index() {
   return (
-    <AppShell>
-      <Dashboard />
-    </AppShell>
+    <RequireAuth>
+      <AppShell>
+        <Dashboard />
+      </AppShell>
+    </RequireAuth>
   );
 }
