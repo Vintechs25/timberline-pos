@@ -64,6 +64,10 @@ export function POSScreen() {
   const [payOpen, setPayOpen] = useState(false);
   const [confirmOpen, setConfirmOpen] = useState(false);
   const [lastSaleNo, setLastSaleNo] = useState<string>("");
+  const [lastSale, setLastSale] = useState<ReturnType<typeof completeSale> | null>(null);
+  const { businesses, activeBusinessId } = useAuth();
+  const activeBiz = businesses.find((b) => b.id === activeBusinessId);
+  const receiptOpts = { businessName: activeBiz?.name ?? "TimberYard POS" };
 
   const categories = useMemo(() => {
     const set = new Set(hardware.map((h) => h.category));
@@ -121,6 +125,7 @@ export function POSScreen() {
     }
     const sale = completeSale(method);
     setLastSaleNo(sale.id);
+    setLastSale(sale);
     setPayOpen(false);
     setConfirmOpen(true);
   }
