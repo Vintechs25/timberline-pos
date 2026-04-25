@@ -46,6 +46,7 @@ interface StaffRow {
 
 export function BusinessAdminPanel() {
   const { activeBusinessId, businesses } = useAuth();
+  const provisionStaffFn = useServerFn(provisionStaff);
   const business = businesses.find((b) => b.id === activeBusinessId);
 
   const [branches, setBranches] = useState<Branch[]>([]);
@@ -61,9 +62,12 @@ export function BusinessAdminPanel() {
   const [baddr, setBaddr] = useState("");
   const [bphone, setBphone] = useState("");
 
+  const [staffEmail, setStaffEmail] = useState("");
   const [staffName, setStaffName] = useState("");
-  const [staffRole, setStaffRole] = useState<"business_admin" | "staff">("staff");
+  const [staffPassword, setStaffPassword] = useState("");
+  const [staffRole, setStaffRole] = useState<"business_admin" | "supervisor" | "cashier">("cashier");
   const [staffBranch, setStaffBranch] = useState<string>("");
+  const [staffResult, setStaffResult] = useState<{ email: string; password: string } | null>(null);
 
   const load = async () => {
     if (!activeBusinessId) return;
@@ -125,48 +129,44 @@ export function BusinessAdminPanel() {
   const inviteStaff = async (e: React.FormEvent) => {
     e.preventDefault();
     if (!activeBusinessId) return;
+    if (staffPassword.length < 8) {
+      toast.error("Password must be at least 8 characters.");
+      return;
+    }
     setBusy(true);
-    // Find profile by full name (simple lookup for demo). In prod use email lookup via edge function.
-    const { data: profile } = await supabase
-      .from("profiles")
-      .select("id")
-      .ilike("full_name", staffName.trim())
-      .maybeSingle();
-    if (!profile) {
-      toast.error("No user found with that full name. Ask them to sign up first.");
+    try {
+      await provisionStaffFn({
+        data: {
+          businessId: activeBusinessId,
+          branchId: staffBranch || null,
+          email: staffEmail.trim(),
+          password: staffPassword,
+          fullName: staffName.trim(),
+          role: staffRole,
+        },
+      });
+      toast.success("Staff account created");
+      setStaffResult({ email: staffEmail.trim(), password: staffPassword });
+      setStaffEmail("");
+      setStaffName("");
+      setStaffPassword("");
+      setStaffBranch("");
+      setStaffRole("cashier");
+      setStaffOpen(false);
+      load();
+    } catch (err) {
+      const msg = err instanceof Error ? err.message : "Failed to add staff";
+      toast.error(msg);
+    } finally {
       setBusy(false);
-      return;
     }
-    const userId = (profile as { id: string }).id;
-    const { error } = await supabase.from("user_roles").insert({
-      user_id: userId,
-      role: staffRole,
-      business_id: activeBusinessId,
-      branch_id: staffBranch || null,
-    });
-    if (!error) {
-      await supabase
-        .from("business_users")
-        .upsert(
-          {
-            user_id: userId,
-            business_id: activeBusinessId,
-            default_branch_id: staffBranch || null,
-          },
-          { onConflict: "business_id,user_id" },
-        );
-    }
-    setBusy(false);
-    if (error) {
-      toast.error(error.message);
-      return;
-    }
-    toast.success("Staff added");
-    setStaffName("");
-    setStaffBranch("");
-    setStaffRole("staff");
-    setStaffOpen(false);
-    load();
+  };
+
+  const generatePassword = () => {
+    const chars = "ABCDEFGHJKLMNPQRSTUVWXYZabcdefghjkmnpqrstuvwxyz23456789";
+    let p = "";
+    for (let i = 0; i < 12; i++) p += chars[Math.floor(Math.random() * chars.length)];
+    setStaffPassword(p);
   };
 
   const removeStaff = async (id: string) => {
