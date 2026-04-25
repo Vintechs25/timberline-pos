@@ -2,7 +2,7 @@ import { createContext, useContext, useEffect, useState, type ReactNode } from "
 import type { Session, User } from "@supabase/supabase-js";
 import { supabase } from "@/integrations/supabase/client";
 
-export type AppRole = "system_owner" | "business_admin" | "staff";
+export type AppRole = "system_owner" | "business_admin" | "supervisor" | "cashier" | "staff";
 
 export interface UserRole {
   role: AppRole;
@@ -27,6 +27,8 @@ interface AuthContextValue {
   loading: boolean;
   isSystemOwner: boolean;
   isBusinessAdmin: boolean;
+  isSupervisor: boolean;
+  isCashier: boolean;
   isStaff: boolean;
   signOut: () => Promise<void>;
   refresh: () => Promise<void>;
@@ -109,7 +111,9 @@ export function AuthProvider({ children }: { children: ReactNode }) {
 
   const isSystemOwner = roles.some((r) => r.role === "system_owner");
   const isBusinessAdmin = roles.some((r) => r.role === "business_admin");
-  const isStaff = roles.some((r) => r.role === "staff");
+  const isSupervisor = roles.some((r) => r.role === "supervisor");
+  const isCashier = roles.some((r) => r.role === "cashier");
+  const isStaff = roles.some((r) => r.role === "staff" || r.role === "cashier" || r.role === "supervisor");
 
   const signOut = async () => {
     await supabase.auth.signOut();
@@ -127,6 +131,8 @@ export function AuthProvider({ children }: { children: ReactNode }) {
         loading,
         isSystemOwner,
         isBusinessAdmin,
+        isSupervisor,
+        isCashier,
         isStaff,
         signOut,
         refresh,

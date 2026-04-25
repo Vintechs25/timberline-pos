@@ -130,6 +130,131 @@ export type Database = {
         }
         Relationships: []
       }
+      customers: {
+        Row: {
+          balance: number
+          business_id: string
+          created_at: string
+          credit_limit: number
+          email: string | null
+          id: string
+          loyalty_discount_pct: number
+          name: string
+          notes: string | null
+          phone: string | null
+          type: string
+          updated_at: string
+        }
+        Insert: {
+          balance?: number
+          business_id: string
+          created_at?: string
+          credit_limit?: number
+          email?: string | null
+          id?: string
+          loyalty_discount_pct?: number
+          name: string
+          notes?: string | null
+          phone?: string | null
+          type?: string
+          updated_at?: string
+        }
+        Update: {
+          balance?: number
+          business_id?: string
+          created_at?: string
+          credit_limit?: number
+          email?: string | null
+          id?: string
+          loyalty_discount_pct?: number
+          name?: string
+          notes?: string | null
+          phone?: string | null
+          type?: string
+          updated_at?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "customers_business_id_fkey"
+            columns: ["business_id"]
+            isOneToOne: false
+            referencedRelation: "businesses"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      hardware_products: {
+        Row: {
+          branch_id: string
+          business_id: string
+          category: string | null
+          cost: number
+          created_at: string
+          id: string
+          image_url: string | null
+          is_active: boolean
+          low_stock_threshold: number
+          name: string
+          price: number
+          sku: string | null
+          stock: number
+          supplier: string | null
+          unit: string
+          updated_at: string
+        }
+        Insert: {
+          branch_id: string
+          business_id: string
+          category?: string | null
+          cost?: number
+          created_at?: string
+          id?: string
+          image_url?: string | null
+          is_active?: boolean
+          low_stock_threshold?: number
+          name: string
+          price?: number
+          sku?: string | null
+          stock?: number
+          supplier?: string | null
+          unit?: string
+          updated_at?: string
+        }
+        Update: {
+          branch_id?: string
+          business_id?: string
+          category?: string | null
+          cost?: number
+          created_at?: string
+          id?: string
+          image_url?: string | null
+          is_active?: boolean
+          low_stock_threshold?: number
+          name?: string
+          price?: number
+          sku?: string | null
+          stock?: number
+          supplier?: string | null
+          unit?: string
+          updated_at?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "hardware_products_branch_id_fkey"
+            columns: ["branch_id"]
+            isOneToOne: false
+            referencedRelation: "branches"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "hardware_products_business_id_fkey"
+            columns: ["business_id"]
+            isOneToOne: false
+            referencedRelation: "businesses"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       profiles: {
         Row: {
           created_at: string
@@ -153,6 +278,198 @@ export type Database = {
           updated_at?: string
         }
         Relationships: []
+      }
+      sale_items: {
+        Row: {
+          created_at: string
+          description: string
+          id: string
+          meta: Json
+          product_id: string | null
+          product_kind: string
+          quantity: number
+          sale_id: string
+          total: number
+          unit_price: number
+        }
+        Insert: {
+          created_at?: string
+          description: string
+          id?: string
+          meta?: Json
+          product_id?: string | null
+          product_kind: string
+          quantity?: number
+          sale_id: string
+          total?: number
+          unit_price?: number
+        }
+        Update: {
+          created_at?: string
+          description?: string
+          id?: string
+          meta?: Json
+          product_id?: string | null
+          product_kind?: string
+          quantity?: number
+          sale_id?: string
+          total?: number
+          unit_price?: number
+        }
+        Relationships: [
+          {
+            foreignKeyName: "sale_items_sale_id_fkey"
+            columns: ["sale_id"]
+            isOneToOne: false
+            referencedRelation: "sales"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      sales: {
+        Row: {
+          branch_id: string
+          business_id: string
+          cashier_id: string | null
+          created_at: string
+          customer_id: string | null
+          customer_name: string | null
+          discount: number
+          id: string
+          payment_method: string
+          receipt_no: string | null
+          status: string
+          subtotal: number
+          total: number
+        }
+        Insert: {
+          branch_id: string
+          business_id: string
+          cashier_id?: string | null
+          created_at?: string
+          customer_id?: string | null
+          customer_name?: string | null
+          discount?: number
+          id?: string
+          payment_method?: string
+          receipt_no?: string | null
+          status?: string
+          subtotal?: number
+          total?: number
+        }
+        Update: {
+          branch_id?: string
+          business_id?: string
+          cashier_id?: string | null
+          created_at?: string
+          customer_id?: string | null
+          customer_name?: string | null
+          discount?: number
+          id?: string
+          payment_method?: string
+          receipt_no?: string | null
+          status?: string
+          subtotal?: number
+          total?: number
+        }
+        Relationships: [
+          {
+            foreignKeyName: "sales_branch_id_fkey"
+            columns: ["branch_id"]
+            isOneToOne: false
+            referencedRelation: "branches"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "sales_business_id_fkey"
+            columns: ["business_id"]
+            isOneToOne: false
+            referencedRelation: "businesses"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "sales_customer_id_fkey"
+            columns: ["customer_id"]
+            isOneToOne: false
+            referencedRelation: "customers"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      timber_products: {
+        Row: {
+          branch_id: string
+          business_id: string
+          created_at: string
+          dim_unit: string
+          grade: string | null
+          id: string
+          is_active: boolean
+          length: number
+          length_unit: string
+          low_stock_threshold: number
+          pieces: number
+          price_per_unit: number
+          price_unit: string
+          species: string
+          thickness: number
+          updated_at: string
+          width: number
+        }
+        Insert: {
+          branch_id: string
+          business_id: string
+          created_at?: string
+          dim_unit?: string
+          grade?: string | null
+          id?: string
+          is_active?: boolean
+          length: number
+          length_unit?: string
+          low_stock_threshold?: number
+          pieces?: number
+          price_per_unit?: number
+          price_unit?: string
+          species: string
+          thickness: number
+          updated_at?: string
+          width: number
+        }
+        Update: {
+          branch_id?: string
+          business_id?: string
+          created_at?: string
+          dim_unit?: string
+          grade?: string | null
+          id?: string
+          is_active?: boolean
+          length?: number
+          length_unit?: string
+          low_stock_threshold?: number
+          pieces?: number
+          price_per_unit?: number
+          price_unit?: string
+          species?: string
+          thickness?: number
+          updated_at?: string
+          width?: number
+        }
+        Relationships: [
+          {
+            foreignKeyName: "timber_products_branch_id_fkey"
+            columns: ["branch_id"]
+            isOneToOne: false
+            referencedRelation: "branches"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "timber_products_business_id_fkey"
+            columns: ["business_id"]
+            isOneToOne: false
+            referencedRelation: "businesses"
+            referencedColumns: ["id"]
+          },
+        ]
       }
       user_roles: {
         Row: {
@@ -212,13 +529,26 @@ export type Database = {
         Args: { _business_id: string; _user_id: string }
         Returns: boolean
       }
+      is_business_license_valid: {
+        Args: { _business_id: string }
+        Returns: boolean
+      }
       is_business_member: {
         Args: { _business_id: string; _user_id: string }
         Returns: boolean
       }
+      user_can_access_branch: {
+        Args: { _branch_id: string; _business_id: string; _user_id: string }
+        Returns: boolean
+      }
     }
     Enums: {
-      app_role: "system_owner" | "business_admin" | "staff"
+      app_role:
+        | "system_owner"
+        | "business_admin"
+        | "staff"
+        | "supervisor"
+        | "cashier"
       business_status: "active" | "suspended" | "revoked"
     }
     CompositeTypes: {
@@ -347,7 +677,13 @@ export type CompositeTypes<
 export const Constants = {
   public: {
     Enums: {
-      app_role: ["system_owner", "business_admin", "staff"],
+      app_role: [
+        "system_owner",
+        "business_admin",
+        "staff",
+        "supervisor",
+        "cashier",
+      ],
       business_status: ["active", "suspended", "revoked"],
     },
   },
