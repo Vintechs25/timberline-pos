@@ -1,5 +1,5 @@
 import { Link, useLocation, useNavigate } from "@tanstack/react-router";
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import {
   LayoutDashboard,
   ShoppingCart,
@@ -12,11 +12,16 @@ import {
   Building2,
   LogOut,
   ChevronsUpDown,
+  PanelLeftClose,
+  PanelLeftOpen,
+  MapPin,
 } from "lucide-react";
 import { cn } from "@/lib/utils";
 import { Sheet, SheetContent, SheetTrigger, SheetTitle } from "@/components/ui/sheet";
 import { Button } from "@/components/ui/button";
 import { useAuth } from "@/lib/auth-context";
+import { LicenseGate } from "@/components/auth/LicenseGate";
+import { useBranches, useBranchSelection } from "@/lib/cloud-store";
 import {
   Select,
   SelectContent,
@@ -38,7 +43,7 @@ type NavItem = {
   label: string;
   icon: typeof LayoutDashboard;
   highlight?: boolean;
-  roles?: ("system_owner" | "business_admin" | "staff")[];
+  roles?: ("system_owner" | "business_admin" | "supervisor" | "cashier" | "staff")[];
 };
 
 const allNav: NavItem[] = [
@@ -47,10 +52,12 @@ const allNav: NavItem[] = [
   { to: "/timber", label: "Timber Yard", icon: TreePine },
   { to: "/inventory", label: "Hardware", icon: Package },
   { to: "/customers", label: "Customers", icon: Users },
-  { to: "/reports", label: "Reports", icon: BarChart3, roles: ["system_owner", "business_admin"] },
+  { to: "/reports", label: "Reports", icon: BarChart3, roles: ["system_owner", "business_admin", "supervisor"] },
   { to: "/business", label: "Business", icon: Building2, roles: ["system_owner", "business_admin"] },
   { to: "/admin", label: "Admin", icon: Shield, roles: ["system_owner"] },
 ];
+
+const SIDEBAR_OPEN_KEY = "ty_sidebar_open";
 
 function NavList({
   path,
@@ -130,12 +137,67 @@ function BusinessSwitcher() {
   );
 }
 
+function BranchSwitcher() {
+  const { branches } = useBranches();
+  const { activeBranchId, setActiveBranchId } = useBranchSelection();
+  const { roles } = useAuth();
+  // Cashiers/supervisors with a fixed branch_id are locked to that branch
+  const lockedBranch = roles.find((r) => r.branch_id);
+
+  // Auto-select first branch if none selected, or locked branch
+  useEffect(() => {
+    if (lockedBranch?.branch_id) {
+      if (activeBranchId !== lockedBranch.branch_id) setActiveBranchId(lockedBranch.branch_id);
+      return;
+    }
+    if (!activeBranchId && branches.length > 0) {
+      setActiveBranchId(branches[0].id);
+    } else if (activeBranchId && !branches.find((b) => b.id === activeBranchId) && branches.length > 0) {
+      setActiveBranchId(branches[0].id);
+    }
+  }, [branches, activeBranchId, setActiveBranchId, lockedBranch]);
+
+  if (branches.length === 0) return null;
+  if (lockedBranch?.branch_id) {
+    const b = branches.find((br) => br.id === lockedBranch.branch_id);
+    return (
+      <div className="flex items-center gap-1.5 h-9 px-3 rounded-md border border-border bg-muted/40 text-xs">
+        <MapPin className="h-3.5 w-3.5 text-muted-foreground" />
+        <span className="font-medium truncate">{b?.name ?? "Branch"}</span>
+      </div>
+    );
+  }
+  return (
+    <Select value={activeBranchId ?? ""} onValueChange={(v) => setActiveBranchId(v)}>
+      <SelectTrigger className="h-9 text-xs">
+        <MapPin className="h-3.5 w-3.5 mr-1" />
+        <SelectValue placeholder="Select branch" />
+      </SelectTrigger>
+      <SelectContent>
+        {branches.map((b) => (
+          <SelectItem key={b.id} value={b.id}>
+            {b.name} <span className="text-muted-foreground">· {b.code}</span>
+          </SelectItem>
+        ))}
+      </SelectContent>
+    </Select>
+  );
+}
+
 function UserMenu() {
-  const { user, signOut, isSystemOwner, isBusinessAdmin } = useAuth();
+  const { user, signOut, isSystemOwner, isBusinessAdmin, isSupervisor, isCashier } = useAuth();
   const navigate = useNavigate();
   if (!user) return null;
   const initial = (user.email ?? "?")[0]?.toUpperCase();
-  const roleLabel = isSystemOwner ? "System Owner" : isBusinessAdmin ? "Business Admin" : "Staff";
+  const roleLabel = isSystemOwner
+    ? "System Owner"
+    : isBusinessAdmin
+      ? "Business Owner"
+      : isSupervisor
+        ? "Supervisor"
+        : isCashier
+          ? "Cashier"
+          : "Staff";
 
   return (
     <DropdownMenu>
@@ -167,12 +229,59 @@ function UserMenu() {
   );
 }
 
+function SidebarPanel({
+  path,
+  items,
+  onNavigate,
+  user,
+}: {
+  path: string;
+  items: NavItem[];
+  onNavigate?: () => void;
+  user: ReturnType<typeof useAuth>["user"];
+}) {
+  return (
+    <>
+      <div className="flex items-center gap-2 px-5 py-5 border-b border-border">
+        <Brand />
+      </div>
+      <div className="px-3 py-3 border-b border-border space-y-2">
+        <BusinessSwitcher />
+        <BranchSwitcher />
+      </div>
+      <NavList path={path} items={items} onNavigate={onNavigate} />
+      <div className="border-t border-border p-3">
+        {user ? (
+          <UserMenu />
+        ) : (
+          <Button asChild size="sm" className="w-full">
+            <Link to="/auth" onClick={onNavigate}>
+              Sign in
+            </Link>
+          </Button>
+        )}
+      </div>
+    </>
+  );
+}
+
 export function AppShell({ children }: { children: React.ReactNode }) {
   const location = useLocation();
   const path = location.pathname;
-  const [open, setOpen] = useState(false);
+  const [mobileOpen, setMobileOpen] = useState(false);
+  const [desktopOpen, setDesktopOpen] = useState<boolean>(() => {
+    if (typeof window === "undefined") return false;
+    const v = localStorage.getItem(SIDEBAR_OPEN_KEY);
+    return v === "1";
+  });
   const { roles, user } = useAuth();
   const userRoles = new Set(roles.map((r) => r.role));
+
+  useEffect(() => {
+    if (typeof window !== "undefined") {
+      localStorage.setItem(SIDEBAR_OPEN_KEY, desktopOpen ? "1" : "0");
+    }
+  }, [desktopOpen]);
 
   const items = allNav.filter(
     (i) => !i.roles || i.roles.some((r) => userRoles.has(r)),
@@ -189,62 +298,66 @@ export function AppShell({ children }: { children: React.ReactNode }) {
 
   return (
     <div className="flex min-h-screen w-full bg-background">
-      {/* Desktop sidebar */}
-      <aside className="hidden w-60 flex-shrink-0 flex-col border-r border-border bg-card md:flex">
-        <div className="flex items-center gap-2 px-5 py-5 border-b border-border">
-          <Brand />
-        </div>
-        <div className="px-3 py-3 border-b border-border">
-          <BusinessSwitcher />
-        </div>
-        <NavList path={path} items={items} />
-        <div className="border-t border-border p-3">
-          {user ? (
-            <UserMenu />
-          ) : (
-            <Button asChild size="sm" className="w-full">
-              <Link to="/auth">Sign in</Link>
-            </Button>
-          )}
+      {/* Desktop sidebar — collapsible */}
+      <aside
+        className={cn(
+          "hidden md:flex flex-shrink-0 flex-col border-r border-border bg-card transition-all duration-200 ease-in-out overflow-hidden",
+          desktopOpen ? "w-60" : "w-0 border-r-0",
+        )}
+      >
+        <div className="w-60 flex flex-col h-full">
+          <SidebarPanel path={path} items={items} user={user} />
         </div>
       </aside>
 
       <div className="flex-1 flex flex-col min-w-0">
-        {/* Mobile top bar */}
-        <header className="md:hidden sticky top-0 z-30 flex items-center justify-between gap-2 border-b border-border bg-card px-3 py-2.5">
-          <Sheet open={open} onOpenChange={setOpen}>
+        {/* Top bar (desktop + mobile) */}
+        <header className="sticky top-0 z-30 flex items-center justify-between gap-2 border-b border-border bg-card px-3 py-2.5">
+          {/* Desktop sidebar toggle */}
+          <Button
+            variant="ghost"
+            size="icon"
+            aria-label={desktopOpen ? "Collapse sidebar" : "Expand sidebar"}
+            onClick={() => setDesktopOpen((v) => !v)}
+            className="hidden md:inline-flex"
+          >
+            {desktopOpen ? (
+              <PanelLeftClose className="h-5 w-5" />
+            ) : (
+              <PanelLeftOpen className="h-5 w-5" />
+            )}
+          </Button>
+
+          {/* Mobile menu */}
+          <Sheet open={mobileOpen} onOpenChange={setMobileOpen}>
             <SheetTrigger asChild>
-              <Button variant="ghost" size="icon" aria-label="Open menu">
+              <Button variant="ghost" size="icon" aria-label="Open menu" className="md:hidden">
                 <Menu className="h-5 w-5" />
               </Button>
             </SheetTrigger>
-            <SheetContent side="left" className="p-0 w-72 flex flex-col">
+            <SheetContent side="left" className="p-0 w-[85vw] max-w-sm flex flex-col">
               <SheetTitle className="sr-only">Navigation</SheetTitle>
-              <div className="flex items-center gap-2 px-5 py-5 border-b border-border">
-                <Brand />
-              </div>
-              <div className="px-3 py-3 border-b border-border">
-                <BusinessSwitcher />
-              </div>
-              <NavList path={path} items={items} onNavigate={() => setOpen(false)} />
-              <div className="border-t border-border p-3">
-                {user ? (
-                  <UserMenu />
-                ) : (
-                  <Button asChild size="sm" className="w-full">
-                    <Link to="/auth" onClick={() => setOpen(false)}>
-                      Sign in
-                    </Link>
-                  </Button>
-                )}
-              </div>
+              <SidebarPanel
+                path={path}
+                items={items}
+                user={user}
+                onNavigate={() => setMobileOpen(false)}
+              />
             </SheetContent>
           </Sheet>
-          <div className="flex-1 text-center min-w-0">
+
+          <div className="flex items-center gap-2 min-w-0">
+            <span className="hidden md:inline text-sm font-bold text-foreground truncate">
+              {currentLabel ?? "TimberYard"}
+            </span>
+          </div>
+
+          <div className="flex-1 text-center md:hidden min-w-0">
             <div className="text-sm font-bold text-foreground truncate">
               {currentLabel ?? "TimberYard"}
             </div>
           </div>
+
           <Button asChild variant="ghost" size="icon" aria-label="Quick sale">
             <Link to="/pos">
               <ShoppingCart className="h-5 w-5 text-accent" />
@@ -252,7 +365,9 @@ export function AppShell({ children }: { children: React.ReactNode }) {
           </Button>
         </header>
 
-        <main className="flex-1 overflow-x-hidden pb-16 md:pb-0">{children}</main>
+        <main className="flex-1 overflow-x-hidden pb-16 md:pb-0">
+          <LicenseGate>{children}</LicenseGate>
+        </main>
 
         {/* Mobile bottom tab bar */}
         <nav
