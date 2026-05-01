@@ -130,6 +130,60 @@ export type Database = {
         }
         Relationships: []
       }
+      customer_requests: {
+        Row: {
+          branch_id: string
+          business_id: string
+          created_at: string
+          customer_id: string | null
+          customer_name: string | null
+          customer_phone: string | null
+          description: string | null
+          fulfilled_at: string | null
+          id: string
+          item_name: string
+          notes: string | null
+          quantity: number
+          recorded_by: string | null
+          status: string
+          updated_at: string
+        }
+        Insert: {
+          branch_id: string
+          business_id: string
+          created_at?: string
+          customer_id?: string | null
+          customer_name?: string | null
+          customer_phone?: string | null
+          description?: string | null
+          fulfilled_at?: string | null
+          id?: string
+          item_name: string
+          notes?: string | null
+          quantity?: number
+          recorded_by?: string | null
+          status?: string
+          updated_at?: string
+        }
+        Update: {
+          branch_id?: string
+          business_id?: string
+          created_at?: string
+          customer_id?: string | null
+          customer_name?: string | null
+          customer_phone?: string | null
+          description?: string | null
+          fulfilled_at?: string | null
+          id?: string
+          item_name?: string
+          notes?: string | null
+          quantity?: number
+          recorded_by?: string | null
+          status?: string
+          updated_at?: string
+        }
+        Relationships: []
+      }
       customers: {
         Row: {
           balance: number
@@ -255,6 +309,63 @@ export type Database = {
           },
         ]
       }
+      mpesa_transactions: {
+        Row: {
+          amount: number
+          branch_id: string
+          business_id: string
+          checkout_request_id: string | null
+          created_at: string
+          id: string
+          initiated_by: string | null
+          merchant_request_id: string | null
+          mpesa_receipt: string | null
+          phone: string
+          raw_callback: Json | null
+          result_code: number | null
+          result_desc: string | null
+          sale_id: string | null
+          status: string
+          updated_at: string
+        }
+        Insert: {
+          amount: number
+          branch_id: string
+          business_id: string
+          checkout_request_id?: string | null
+          created_at?: string
+          id?: string
+          initiated_by?: string | null
+          merchant_request_id?: string | null
+          mpesa_receipt?: string | null
+          phone: string
+          raw_callback?: Json | null
+          result_code?: number | null
+          result_desc?: string | null
+          sale_id?: string | null
+          status?: string
+          updated_at?: string
+        }
+        Update: {
+          amount?: number
+          branch_id?: string
+          business_id?: string
+          checkout_request_id?: string | null
+          created_at?: string
+          id?: string
+          initiated_by?: string | null
+          merchant_request_id?: string | null
+          mpesa_receipt?: string | null
+          phone?: string
+          raw_callback?: Json | null
+          result_code?: number | null
+          result_desc?: string | null
+          sale_id?: string | null
+          status?: string
+          updated_at?: string
+        }
+        Relationships: []
+      }
       profiles: {
         Row: {
           created_at: string
@@ -278,6 +389,118 @@ export type Database = {
           updated_at?: string
         }
         Relationships: []
+      }
+      purchase_order_items: {
+        Row: {
+          created_at: string
+          description: string
+          id: string
+          meta: Json
+          product_id: string | null
+          product_kind: string
+          purchase_order_id: string
+          quantity: number
+          received_qty: number
+          total: number
+          unit_cost: number
+        }
+        Insert: {
+          created_at?: string
+          description: string
+          id?: string
+          meta?: Json
+          product_id?: string | null
+          product_kind: string
+          purchase_order_id: string
+          quantity?: number
+          received_qty?: number
+          total?: number
+          unit_cost?: number
+        }
+        Update: {
+          created_at?: string
+          description?: string
+          id?: string
+          meta?: Json
+          product_id?: string | null
+          product_kind?: string
+          purchase_order_id?: string
+          quantity?: number
+          received_qty?: number
+          total?: number
+          unit_cost?: number
+        }
+        Relationships: [
+          {
+            foreignKeyName: "purchase_order_items_purchase_order_id_fkey"
+            columns: ["purchase_order_id"]
+            isOneToOne: false
+            referencedRelation: "purchase_orders"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      purchase_orders: {
+        Row: {
+          amount_paid: number
+          branch_id: string
+          business_id: string
+          created_at: string
+          created_by: string | null
+          id: string
+          notes: string | null
+          ordered_at: string | null
+          po_number: string | null
+          received_at: string | null
+          status: string
+          subtotal: number
+          supplier_id: string
+          total: number
+          updated_at: string
+        }
+        Insert: {
+          amount_paid?: number
+          branch_id: string
+          business_id: string
+          created_at?: string
+          created_by?: string | null
+          id?: string
+          notes?: string | null
+          ordered_at?: string | null
+          po_number?: string | null
+          received_at?: string | null
+          status?: string
+          subtotal?: number
+          supplier_id: string
+          total?: number
+          updated_at?: string
+        }
+        Update: {
+          amount_paid?: number
+          branch_id?: string
+          business_id?: string
+          created_at?: string
+          created_by?: string | null
+          id?: string
+          notes?: string | null
+          ordered_at?: string | null
+          po_number?: string | null
+          received_at?: string | null
+          status?: string
+          subtotal?: number
+          supplier_id?: string
+          total?: number
+          updated_at?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "purchase_orders_supplier_id_fkey"
+            columns: ["supplier_id"]
+            isOneToOne: false
+            referencedRelation: "suppliers"
+            referencedColumns: ["id"]
+          },
+        ]
       }
       sale_items: {
         Row: {
@@ -395,6 +618,98 @@ export type Database = {
             referencedColumns: ["id"]
           },
         ]
+      }
+      supplier_payments: {
+        Row: {
+          amount: number
+          branch_id: string | null
+          business_id: string
+          created_at: string
+          id: string
+          method: string
+          notes: string | null
+          paid_by: string | null
+          reference: string | null
+          supplier_id: string
+        }
+        Insert: {
+          amount: number
+          branch_id?: string | null
+          business_id: string
+          created_at?: string
+          id?: string
+          method?: string
+          notes?: string | null
+          paid_by?: string | null
+          reference?: string | null
+          supplier_id: string
+        }
+        Update: {
+          amount?: number
+          branch_id?: string | null
+          business_id?: string
+          created_at?: string
+          id?: string
+          method?: string
+          notes?: string | null
+          paid_by?: string | null
+          reference?: string | null
+          supplier_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "supplier_payments_supplier_id_fkey"
+            columns: ["supplier_id"]
+            isOneToOne: false
+            referencedRelation: "suppliers"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      suppliers: {
+        Row: {
+          address: string | null
+          balance: number
+          business_id: string
+          contact_person: string | null
+          created_at: string
+          email: string | null
+          id: string
+          is_active: boolean
+          name: string
+          notes: string | null
+          phone: string | null
+          updated_at: string
+        }
+        Insert: {
+          address?: string | null
+          balance?: number
+          business_id: string
+          contact_person?: string | null
+          created_at?: string
+          email?: string | null
+          id?: string
+          is_active?: boolean
+          name: string
+          notes?: string | null
+          phone?: string | null
+          updated_at?: string
+        }
+        Update: {
+          address?: string | null
+          balance?: number
+          business_id?: string
+          contact_person?: string | null
+          created_at?: string
+          email?: string | null
+          id?: string
+          is_active?: boolean
+          name?: string
+          notes?: string | null
+          phone?: string | null
+          updated_at?: string
+        }
+        Relationships: []
       }
       timber_products: {
         Row: {
@@ -537,6 +852,18 @@ export type Database = {
         Args: { _business_id: string; _user_id: string }
         Returns: boolean
       }
+      pay_supplier: {
+        Args: {
+          _amount: number
+          _branch_id: string
+          _method: string
+          _notes: string
+          _reference: string
+          _supplier_id: string
+        }
+        Returns: string
+      }
+      receive_purchase_order: { Args: { _po_id: string }; Returns: undefined }
       user_can_access_branch: {
         Args: { _branch_id: string; _business_id: string; _user_id: string }
         Returns: boolean

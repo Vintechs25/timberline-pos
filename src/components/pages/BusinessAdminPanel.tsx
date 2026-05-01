@@ -316,13 +316,14 @@ export function BusinessAdminPanel() {
                   <Label>Role</Label>
                   <Select
                     value={staffRole}
-                    onValueChange={(v) => setStaffRole(v as "business_admin" | "staff")}
+                    onValueChange={(v) => setStaffRole(v as "business_admin" | "supervisor" | "cashier")}
                   >
                     <SelectTrigger>
                       <SelectValue />
                     </SelectTrigger>
                     <SelectContent>
-                      <SelectItem value="staff">Staff</SelectItem>
+                      <SelectItem value="cashier">Cashier</SelectItem>
+                      <SelectItem value="supervisor">Supervisor</SelectItem>
                       <SelectItem value="business_admin">Business Admin</SelectItem>
                     </SelectContent>
                   </Select>
