@@ -35,9 +35,11 @@ import {
   CheckCircle2,
   Eye,
   EyeOff,
+  Smartphone,
 } from "lucide-react";
 import { toast } from "sonner";
 import { useAuth } from "@/lib/auth-context";
+import { MpesaConfigDialog } from "./MpesaConfigDialog";
 
 interface Business {
   id: string;
