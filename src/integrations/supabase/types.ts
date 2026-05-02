@@ -309,6 +309,48 @@ export type Database = {
           },
         ]
       }
+      mpesa_configs: {
+        Row: {
+          business_id: string
+          callback_url: string | null
+          consumer_key: string
+          consumer_secret: string
+          created_at: string
+          environment: string
+          id: string
+          is_active: boolean
+          passkey: string
+          shortcode: string
+          updated_at: string
+        }
+        Insert: {
+          business_id: string
+          callback_url?: string | null
+          consumer_key: string
+          consumer_secret: string
+          created_at?: string
+          environment?: string
+          id?: string
+          is_active?: boolean
+          passkey: string
+          shortcode: string
+          updated_at?: string
+        }
+        Update: {
+          business_id?: string
+          callback_url?: string | null
+          consumer_key?: string
+          consumer_secret?: string
+          created_at?: string
+          environment?: string
+          id?: string
+          is_active?: boolean
+          passkey?: string
+          shortcode?: string
+          updated_at?: string
+        }
+        Relationships: []
+      }
       mpesa_transactions: {
         Row: {
           amount: number
@@ -833,6 +875,14 @@ export type Database = {
       [_ in never]: never
     }
     Functions: {
+      get_mpesa_status: {
+        Args: { _business_id: string }
+        Returns: {
+          active: boolean
+          configured: boolean
+          environment: string
+        }[]
+      }
       has_role: {
         Args: {
           _role: Database["public"]["Enums"]["app_role"]
