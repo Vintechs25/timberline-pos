@@ -186,9 +186,10 @@ export function CustomerRequestsPage() {
   };
 
   const updateStatus = async (id: string, status: string) => {
-    const patch: Record<string, unknown> = { status };
-    if (status === "fulfilled") patch.fulfilled_at = new Date().toISOString();
-    else patch.fulfilled_at = null;
+    const patch = {
+      status,
+      fulfilled_at: status === "fulfilled" ? new Date().toISOString() : null,
+    };
     const { error } = await supabase.from("customer_requests").update(patch).eq("id", id);
     if (error) toast.error(error.message);
     else toast.success("Updated");
