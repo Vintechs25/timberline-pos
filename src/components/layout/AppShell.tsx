@@ -16,6 +16,7 @@ import {
   PanelLeftOpen,
   MapPin,
   History,
+  ClipboardList,
 } from "lucide-react";
 import { cn } from "@/lib/utils";
 import { Sheet, SheetContent, SheetTrigger, SheetTitle } from "@/components/ui/sheet";
@@ -51,6 +52,7 @@ const allNav: NavItem[] = [
   { to: "/", label: "Dashboard", icon: LayoutDashboard },
   { to: "/pos", label: "Point of Sale", icon: ShoppingCart, highlight: true },
   { to: "/sales-history", label: "Sales History", icon: History },
+  { to: "/customer-requests", label: "Customer Requests", icon: ClipboardList },
   { to: "/timber", label: "Timber Yard", icon: TreePine },
   { to: "/inventory", label: "Hardware", icon: Package },
   { to: "/customers", label: "Customers", icon: Users },

@@ -35,9 +35,11 @@ import {
   CheckCircle2,
   Eye,
   EyeOff,
+  Smartphone,
 } from "lucide-react";
 import { toast } from "sonner";
 import { useAuth } from "@/lib/auth-context";
+import { MpesaConfigDialog } from "./MpesaConfigDialog";
 
 interface Business {
   id: string;
@@ -59,6 +61,7 @@ export function SystemOwnerPanel() {
   const [loading, setLoading] = useState(true);
   const [open, setOpen] = useState(false);
   const [busy, setBusy] = useState(false);
+  const [mpesaTarget, setMpesaTarget] = useState<{ id: string; name: string } | null>(null);
 
   // Form state
   const [name, setName] = useState("");
@@ -486,6 +489,14 @@ export function SystemOwnerPanel() {
                             >
                               <KeyRound className="h-3.5 w-3.5" />
                             </Button>
+                            <Button
+                              variant="outline"
+                              size="sm"
+                              title="M-Pesa Daraja settings"
+                              onClick={() => setMpesaTarget({ id: b.id, name: b.name })}
+                            >
+                              <Smartphone className="h-3.5 w-3.5" />
+                            </Button>
                           </div>
                         </TableCell>
                       </TableRow>
@@ -497,6 +508,15 @@ export function SystemOwnerPanel() {
           )}
         </CardContent>
       </Card>
+
+      {mpesaTarget && (
+        <MpesaConfigDialog
+          businessId={mpesaTarget.id}
+          businessName={mpesaTarget.name}
+          open={!!mpesaTarget}
+          onOpenChange={(o) => !o && setMpesaTarget(null)}
+        />
+      )}
     </div>
   );
 }
