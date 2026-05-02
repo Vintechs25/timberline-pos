@@ -18,3 +18,4 @@ export const Route = createFileRoute("/customer-requests")({
     </RequireAuth>
   ),
 });
+
