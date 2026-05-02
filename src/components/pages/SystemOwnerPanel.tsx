@@ -61,6 +61,7 @@ export function SystemOwnerPanel() {
   const [loading, setLoading] = useState(true);
   const [open, setOpen] = useState(false);
   const [busy, setBusy] = useState(false);
+  const [mpesaTarget, setMpesaTarget] = useState<{ id: string; name: string } | null>(null);
 
   // Form state
   const [name, setName] = useState("");
