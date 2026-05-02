@@ -489,6 +489,14 @@ export function SystemOwnerPanel() {
                             >
                               <KeyRound className="h-3.5 w-3.5" />
                             </Button>
+                            <Button
+                              variant="outline"
+                              size="sm"
+                              title="M-Pesa Daraja settings"
+                              onClick={() => setMpesaTarget({ id: b.id, name: b.name })}
+                            >
+                              <Smartphone className="h-3.5 w-3.5" />
+                            </Button>
                           </div>
                         </TableCell>
                       </TableRow>
@@ -500,6 +508,15 @@ export function SystemOwnerPanel() {
           )}
         </CardContent>
       </Card>
+
+      {mpesaTarget && (
+        <MpesaConfigDialog
+          businessId={mpesaTarget.id}
+          businessName={mpesaTarget.name}
+          open={!!mpesaTarget}
+          onOpenChange={(o) => !o && setMpesaTarget(null)}
+        />
+      )}
     </div>
   );
 }
