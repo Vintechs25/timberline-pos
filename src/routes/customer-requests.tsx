@@ -1,3 +1,4 @@
+// route: customer-requests
 import { createFileRoute } from "@tanstack/react-router";
 import { AppShell } from "@/components/layout/AppShell";
 import { RequireAuth } from "@/components/auth/RequireAuth";
@@ -18,3 +19,4 @@ export const Route = createFileRoute("/customer-requests")({
     </RequireAuth>
   ),
 });
+

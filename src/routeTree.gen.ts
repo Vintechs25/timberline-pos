@@ -15,6 +15,7 @@ import { Route as ReportsRouteImport } from './routes/reports'
 import { Route as PosRouteImport } from './routes/pos'
 import { Route as InventoryRouteImport } from './routes/inventory'
 import { Route as CustomersRouteImport } from './routes/customers'
+import { Route as CustomerRequestsRouteImport } from './routes/customer-requests'
 import { Route as BusinessRouteImport } from './routes/business'
 import { Route as AuthRouteImport } from './routes/auth'
 import { Route as AdminRouteImport } from './routes/admin'
@@ -50,6 +51,11 @@ const CustomersRoute = CustomersRouteImport.update({
   path: '/customers',
   getParentRoute: () => rootRouteImport,
 } as any)
+const CustomerRequestsRoute = CustomerRequestsRouteImport.update({
+  id: '/customer-requests',
+  path: '/customer-requests',
+  getParentRoute: () => rootRouteImport,
+} as any)
 const BusinessRoute = BusinessRouteImport.update({
   id: '/business',
   path: '/business',
@@ -76,6 +82,7 @@ export interface FileRoutesByFullPath {
   '/admin': typeof AdminRoute
   '/auth': typeof AuthRoute
   '/business': typeof BusinessRoute
+  '/customer-requests': typeof CustomerRequestsRoute
   '/customers': typeof CustomersRoute
   '/inventory': typeof InventoryRoute
   '/pos': typeof PosRoute
@@ -88,6 +95,7 @@ export interface FileRoutesByTo {
   '/admin': typeof AdminRoute
   '/auth': typeof AuthRoute
   '/business': typeof BusinessRoute
+  '/customer-requests': typeof CustomerRequestsRoute
   '/customers': typeof CustomersRoute
   '/inventory': typeof InventoryRoute
   '/pos': typeof PosRoute
@@ -101,6 +109,7 @@ export interface FileRoutesById {
   '/admin': typeof AdminRoute
   '/auth': typeof AuthRoute
   '/business': typeof BusinessRoute
+  '/customer-requests': typeof CustomerRequestsRoute
   '/customers': typeof CustomersRoute
   '/inventory': typeof InventoryRoute
   '/pos': typeof PosRoute
@@ -115,6 +124,7 @@ export interface FileRouteTypes {
     | '/admin'
     | '/auth'
     | '/business'
+    | '/customer-requests'
     | '/customers'
     | '/inventory'
     | '/pos'
@@ -127,6 +137,7 @@ export interface FileRouteTypes {
     | '/admin'
     | '/auth'
     | '/business'
+    | '/customer-requests'
     | '/customers'
     | '/inventory'
     | '/pos'
@@ -139,6 +150,7 @@ export interface FileRouteTypes {
     | '/admin'
     | '/auth'
     | '/business'
+    | '/customer-requests'
     | '/customers'
     | '/inventory'
     | '/pos'
@@ -152,6 +164,7 @@ export interface RootRouteChildren {
   AdminRoute: typeof AdminRoute
   AuthRoute: typeof AuthRoute
   BusinessRoute: typeof BusinessRoute
+  CustomerRequestsRoute: typeof CustomerRequestsRoute
   CustomersRoute: typeof CustomersRoute
   InventoryRoute: typeof InventoryRoute
   PosRoute: typeof PosRoute
@@ -204,6 +217,13 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof CustomersRouteImport
       parentRoute: typeof rootRouteImport
     }
+    '/customer-requests': {
+      id: '/customer-requests'
+      path: '/customer-requests'
+      fullPath: '/customer-requests'
+      preLoaderRoute: typeof CustomerRequestsRouteImport
+      parentRoute: typeof rootRouteImport
+    }
     '/business': {
       id: '/business'
       path: '/business'
@@ -240,6 +260,7 @@ const rootRouteChildren: RootRouteChildren = {
   AdminRoute: AdminRoute,
   AuthRoute: AuthRoute,
   BusinessRoute: BusinessRoute,
+  CustomerRequestsRoute: CustomerRequestsRoute,
   CustomersRoute: CustomersRoute,
   InventoryRoute: InventoryRoute,
   PosRoute: PosRoute,
