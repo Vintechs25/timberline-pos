@@ -46,6 +46,7 @@ type SaleRow = {
   payment_method: string;
   status: string;
   created_at: string;
+  refund_reason?: string | null;
 };
 
 type SaleItemRow = {
