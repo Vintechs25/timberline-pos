@@ -88,9 +88,9 @@ export function SuppliersPage() {
       _supplier_id: paySupplier.id,
       _amount: payForm.amount,
       _method: payForm.method,
-      _reference: payForm.reference || null,
-      _notes: payForm.notes || null,
-      _branch_id: activeBranchId,
+      _reference: payForm.reference || "",
+      _notes: payForm.notes || "",
+      _branch_id: activeBranchId ?? "",
     });
     setBusy(false);
     if (error) { toast.error(error.message); return; }
