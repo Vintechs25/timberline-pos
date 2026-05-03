@@ -17,6 +17,7 @@ import {
   MapPin,
   History,
   ClipboardList,
+  Truck,
 } from "lucide-react";
 import { cn } from "@/lib/utils";
 import { Sheet, SheetContent, SheetTrigger, SheetTitle } from "@/components/ui/sheet";
@@ -56,6 +57,7 @@ const allNav: NavItem[] = [
   { to: "/timber", label: "Timber Yard", icon: TreePine },
   { to: "/inventory", label: "Hardware", icon: Package },
   { to: "/customers", label: "Customers", icon: Users },
+  { to: "/suppliers", label: "Suppliers", icon: Truck, roles: ["system_owner", "business_admin", "supervisor"] },
   { to: "/reports", label: "Reports", icon: BarChart3, roles: ["system_owner", "business_admin", "supervisor"] },
   { to: "/business", label: "Business", icon: Building2, roles: ["system_owner", "business_admin"] },
   { to: "/admin", label: "Admin", icon: Shield, roles: ["system_owner"] },

@@ -1,13 +1,13 @@
 /**
- * Cloud-backed store for per-branch inventory, customers, and sales.
- * Replaces the local-only zustand store. Uses Supabase as the source of truth.
+ * Cloud-backed store for per-branch inventory, customers, sales, suppliers.
+ * All data lives in Supabase. Hooks expose loading + reload helpers.
  */
 import { useEffect, useCallback, useState } from "react";
 import { supabase } from "@/integrations/supabase/client";
 import { useAuth } from "./auth-context";
 import { create } from "zustand";
 
-// Active branch selection (per user, per device)
+// ---------------- Branch selection ----------------
 const ACTIVE_BRANCH_KEY = "ty_active_branch";
 
 interface BranchSelectionState {
@@ -26,6 +26,7 @@ export const useBranchSelection = create<BranchSelectionState>((set) => ({
   },
 }));
 
+// ---------------- Types ----------------
 export interface Branch {
   id: string;
   name: string;
@@ -46,6 +47,7 @@ export interface CloudHardware {
   stock: number;
   low_stock_threshold: number;
   supplier: string | null;
+  is_active: boolean;
 }
 
 export interface CloudTimber {
@@ -63,6 +65,7 @@ export interface CloudTimber {
   price_unit: string;
   pieces: number;
   low_stock_threshold: number;
+  is_active: boolean;
 }
 
 export interface CloudCustomer {
@@ -70,10 +73,12 @@ export interface CloudCustomer {
   business_id: string;
   name: string;
   phone: string | null;
+  email: string | null;
   type: string;
   credit_limit: number;
   balance: number;
   loyalty_discount_pct: number;
+  notes: string | null;
 }
 
 export interface CloudSale {
@@ -89,8 +94,41 @@ export interface CloudSale {
   payment_method: string;
   status: string;
   created_at: string;
+  price_override?: boolean;
+  original_total?: number | null;
+  refund_reason?: string | null;
 }
 
+export interface CloudSupplier {
+  id: string;
+  business_id: string;
+  name: string;
+  contact_person: string | null;
+  phone: string | null;
+  email: string | null;
+  address: string | null;
+  notes: string | null;
+  balance: number;
+  is_active: boolean;
+}
+
+export interface CloudMpesaTxn {
+  id: string;
+  business_id: string;
+  branch_id: string;
+  sale_id: string | null;
+  amount: number;
+  phone: string;
+  status: string;
+  result_code: number | null;
+  result_desc: string | null;
+  mpesa_receipt: string | null;
+  checkout_request_id: string | null;
+  merchant_request_id: string | null;
+  created_at: string;
+}
+
+// ---------------- Hooks ----------------
 export function useBranches() {
   const { activeBusinessId } = useAuth();
   const [branches, setBranches] = useState<Branch[]>([]);
@@ -112,10 +150,7 @@ export function useBranches() {
     setLoading(false);
   }, [activeBusinessId]);
 
-  useEffect(() => {
-    load();
-  }, [load]);
-
+  useEffect(() => { load(); }, [load]);
   return { branches, loading, reload: load };
 }
 
@@ -124,11 +159,7 @@ export function useHardware(branchId: string | null) {
   const [loading, setLoading] = useState(true);
 
   const load = useCallback(async () => {
-    if (!branchId) {
-      setItems([]);
-      setLoading(false);
-      return;
-    }
+    if (!branchId) { setItems([]); setLoading(false); return; }
     setLoading(true);
     const { data } = await supabase
       .from("hardware_products")
@@ -140,10 +171,7 @@ export function useHardware(branchId: string | null) {
     setLoading(false);
   }, [branchId]);
 
-  useEffect(() => {
-    load();
-  }, [load]);
-
+  useEffect(() => { load(); }, [load]);
   return { items, loading, reload: load };
 }
 
@@ -152,11 +180,7 @@ export function useTimber(branchId: string | null) {
   const [loading, setLoading] = useState(true);
 
   const load = useCallback(async () => {
-    if (!branchId) {
-      setItems([]);
-      setLoading(false);
-      return;
-    }
+    if (!branchId) { setItems([]); setLoading(false); return; }
     setLoading(true);
     const { data } = await supabase
       .from("timber_products")
@@ -168,10 +192,7 @@ export function useTimber(branchId: string | null) {
     setLoading(false);
   }, [branchId]);
 
-  useEffect(() => {
-    load();
-  }, [load]);
-
+  useEffect(() => { load(); }, [load]);
   return { items, loading, reload: load };
 }
 
@@ -181,11 +202,7 @@ export function useCustomers() {
   const [loading, setLoading] = useState(true);
 
   const load = useCallback(async () => {
-    if (!activeBusinessId) {
-      setItems([]);
-      setLoading(false);
-      return;
-    }
+    if (!activeBusinessId) { setItems([]); setLoading(false); return; }
     setLoading(true);
     const { data } = await supabase
       .from("customers")
@@ -196,10 +213,28 @@ export function useCustomers() {
     setLoading(false);
   }, [activeBusinessId]);
 
-  useEffect(() => {
-    load();
-  }, [load]);
+  useEffect(() => { load(); }, [load]);
+  return { items, loading, reload: load };
+}
 
+export function useSuppliers() {
+  const { activeBusinessId } = useAuth();
+  const [items, setItems] = useState<CloudSupplier[]>([]);
+  const [loading, setLoading] = useState(true);
+
+  const load = useCallback(async () => {
+    if (!activeBusinessId) { setItems([]); setLoading(false); return; }
+    setLoading(true);
+    const { data } = await supabase
+      .from("suppliers")
+      .select("*")
+      .eq("business_id", activeBusinessId)
+      .order("name");
+    setItems((data as CloudSupplier[]) ?? []);
+    setLoading(false);
+  }, [activeBusinessId]);
+
+  useEffect(() => { load(); }, [load]);
   return { items, loading, reload: load };
 }
 
@@ -209,11 +244,7 @@ export function useSales(branchId: string | null, allBranches = false) {
   const [loading, setLoading] = useState(true);
 
   const load = useCallback(async () => {
-    if (!activeBusinessId) {
-      setItems([]);
-      setLoading(false);
-      return;
-    }
+    if (!activeBusinessId) { setItems([]); setLoading(false); return; }
     setLoading(true);
     let q = supabase
       .from("sales")
@@ -227,10 +258,30 @@ export function useSales(branchId: string | null, allBranches = false) {
     setLoading(false);
   }, [activeBusinessId, branchId, allBranches]);
 
-  useEffect(() => {
-    load();
-  }, [load]);
+  useEffect(() => { load(); }, [load]);
+  return { items, loading, reload: load };
+}
 
+export function useMpesaTransactions(branchId: string | null) {
+  const { activeBusinessId } = useAuth();
+  const [items, setItems] = useState<CloudMpesaTxn[]>([]);
+  const [loading, setLoading] = useState(false);
+
+  const load = useCallback(async () => {
+    if (!activeBusinessId || !branchId) { setItems([]); return; }
+    setLoading(true);
+    const { data } = await supabase
+      .from("mpesa_transactions")
+      .select("*")
+      .eq("business_id", activeBusinessId)
+      .eq("branch_id", branchId)
+      .order("created_at", { ascending: false })
+      .limit(50);
+    setItems((data as CloudMpesaTxn[]) ?? []);
+    setLoading(false);
+  }, [activeBusinessId, branchId]);
+
+  useEffect(() => { load(); }, [load]);
   return { items, loading, reload: load };
 }
 

@@ -10,6 +10,7 @@
 
 import { Route as rootRouteImport } from './routes/__root'
 import { Route as TimberRouteImport } from './routes/timber'
+import { Route as SuppliersRouteImport } from './routes/suppliers'
 import { Route as SalesHistoryRouteImport } from './routes/sales-history'
 import { Route as ReportsRouteImport } from './routes/reports'
 import { Route as PosRouteImport } from './routes/pos'
@@ -20,10 +21,16 @@ import { Route as BusinessRouteImport } from './routes/business'
 import { Route as AuthRouteImport } from './routes/auth'
 import { Route as AdminRouteImport } from './routes/admin'
 import { Route as IndexRouteImport } from './routes/index'
+import { Route as ApiPublicMpesaCallbackRouteImport } from './routes/api/public/mpesa-callback'
 
 const TimberRoute = TimberRouteImport.update({
   id: '/timber',
   path: '/timber',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const SuppliersRoute = SuppliersRouteImport.update({
+  id: '/suppliers',
+  path: '/suppliers',
   getParentRoute: () => rootRouteImport,
 } as any)
 const SalesHistoryRoute = SalesHistoryRouteImport.update({
@@ -76,6 +83,11 @@ const IndexRoute = IndexRouteImport.update({
   path: '/',
   getParentRoute: () => rootRouteImport,
 } as any)
+const ApiPublicMpesaCallbackRoute = ApiPublicMpesaCallbackRouteImport.update({
+  id: '/api/public/mpesa-callback',
+  path: '/api/public/mpesa-callback',
+  getParentRoute: () => rootRouteImport,
+} as any)
 
 export interface FileRoutesByFullPath {
   '/': typeof IndexRoute
@@ -88,7 +100,9 @@ export interface FileRoutesByFullPath {
   '/pos': typeof PosRoute
   '/reports': typeof ReportsRoute
   '/sales-history': typeof SalesHistoryRoute
+  '/suppliers': typeof SuppliersRoute
   '/timber': typeof TimberRoute
+  '/api/public/mpesa-callback': typeof ApiPublicMpesaCallbackRoute
 }
 export interface FileRoutesByTo {
   '/': typeof IndexRoute
@@ -101,7 +115,9 @@ export interface FileRoutesByTo {
   '/pos': typeof PosRoute
   '/reports': typeof ReportsRoute
   '/sales-history': typeof SalesHistoryRoute
+  '/suppliers': typeof SuppliersRoute
   '/timber': typeof TimberRoute
+  '/api/public/mpesa-callback': typeof ApiPublicMpesaCallbackRoute
 }
 export interface FileRoutesById {
   __root__: typeof rootRouteImport
@@ -115,7 +131,9 @@ export interface FileRoutesById {
   '/pos': typeof PosRoute
   '/reports': typeof ReportsRoute
   '/sales-history': typeof SalesHistoryRoute
+  '/suppliers': typeof SuppliersRoute
   '/timber': typeof TimberRoute
+  '/api/public/mpesa-callback': typeof ApiPublicMpesaCallbackRoute
 }
 export interface FileRouteTypes {
   fileRoutesByFullPath: FileRoutesByFullPath
@@ -130,7 +148,9 @@ export interface FileRouteTypes {
     | '/pos'
     | '/reports'
     | '/sales-history'
+    | '/suppliers'
     | '/timber'
+    | '/api/public/mpesa-callback'
   fileRoutesByTo: FileRoutesByTo
   to:
     | '/'
@@ -143,7 +163,9 @@ export interface FileRouteTypes {
     | '/pos'
     | '/reports'
     | '/sales-history'
+    | '/suppliers'
     | '/timber'
+    | '/api/public/mpesa-callback'
   id:
     | '__root__'
     | '/'
@@ -156,7 +178,9 @@ export interface FileRouteTypes {
     | '/pos'
     | '/reports'
     | '/sales-history'
+    | '/suppliers'
     | '/timber'
+    | '/api/public/mpesa-callback'
   fileRoutesById: FileRoutesById
 }
 export interface RootRouteChildren {
@@ -170,7 +194,9 @@ export interface RootRouteChildren {
   PosRoute: typeof PosRoute
   ReportsRoute: typeof ReportsRoute
   SalesHistoryRoute: typeof SalesHistoryRoute
+  SuppliersRoute: typeof SuppliersRoute
   TimberRoute: typeof TimberRoute
+  ApiPublicMpesaCallbackRoute: typeof ApiPublicMpesaCallbackRoute
 }
 
 declare module '@tanstack/react-router' {
@@ -180,6 +206,13 @@ declare module '@tanstack/react-router' {
       path: '/timber'
       fullPath: '/timber'
       preLoaderRoute: typeof TimberRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/suppliers': {
+      id: '/suppliers'
+      path: '/suppliers'
+      fullPath: '/suppliers'
+      preLoaderRoute: typeof SuppliersRouteImport
       parentRoute: typeof rootRouteImport
     }
     '/sales-history': {
@@ -252,6 +285,13 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof IndexRouteImport
       parentRoute: typeof rootRouteImport
     }
+    '/api/public/mpesa-callback': {
+      id: '/api/public/mpesa-callback'
+      path: '/api/public/mpesa-callback'
+      fullPath: '/api/public/mpesa-callback'
+      preLoaderRoute: typeof ApiPublicMpesaCallbackRouteImport
+      parentRoute: typeof rootRouteImport
+    }
   }
 }
 
@@ -266,7 +306,9 @@ const rootRouteChildren: RootRouteChildren = {
   PosRoute: PosRoute,
   ReportsRoute: ReportsRoute,
   SalesHistoryRoute: SalesHistoryRoute,
+  SuppliersRoute: SuppliersRoute,
   TimberRoute: TimberRoute,
+  ApiPublicMpesaCallbackRoute: ApiPublicMpesaCallbackRoute,
 }
 export const routeTree = rootRouteImport
   ._addFileChildren(rootRouteChildren)

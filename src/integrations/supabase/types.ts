@@ -601,11 +601,17 @@ export type Database = {
           customer_name: string | null
           discount: number
           id: string
+          original_total: number | null
           payment_method: string
+          price_override: boolean
           receipt_no: string | null
+          refund_reason: string | null
+          refunded_at: string | null
+          refunded_by: string | null
           status: string
           subtotal: number
           total: number
+          updated_at: string
         }
         Insert: {
           branch_id: string
@@ -616,11 +622,17 @@ export type Database = {
           customer_name?: string | null
           discount?: number
           id?: string
+          original_total?: number | null
           payment_method?: string
+          price_override?: boolean
           receipt_no?: string | null
+          refund_reason?: string | null
+          refunded_at?: string | null
+          refunded_by?: string | null
           status?: string
           subtotal?: number
           total?: number
+          updated_at?: string
         }
         Update: {
           branch_id?: string
@@ -631,11 +643,17 @@ export type Database = {
           customer_name?: string | null
           discount?: number
           id?: string
+          original_total?: number | null
           payment_method?: string
+          price_override?: boolean
           receipt_no?: string | null
+          refund_reason?: string | null
+          refunded_at?: string | null
+          refunded_by?: string | null
           status?: string
           subtotal?: number
           total?: number
+          updated_at?: string
         }
         Relationships: [
           {
@@ -914,6 +932,10 @@ export type Database = {
         Returns: string
       }
       receive_purchase_order: { Args: { _po_id: string }; Returns: undefined }
+      refund_sale: {
+        Args: { _reason: string; _sale_id: string }
+        Returns: undefined
+      }
       user_can_access_branch: {
         Args: { _branch_id: string; _business_id: string; _user_id: string }
         Returns: boolean

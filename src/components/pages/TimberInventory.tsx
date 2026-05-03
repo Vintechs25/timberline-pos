@@ -1,123 +1,169 @@
 import { useState } from "react";
-import { usePOS, formatKsh } from "@/lib/store";
+import { useTimber, useBranchSelection, formatKsh, type CloudTimber } from "@/lib/cloud-store";
+import { useAuth } from "@/lib/auth-context";
+import { supabase } from "@/integrations/supabase/client";
 import { Card } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
+import { Label } from "@/components/ui/label";
 import {
-  Dialog,
-  DialogContent,
-  DialogHeader,
-  DialogTitle,
-  DialogFooter,
+  Dialog, DialogContent, DialogHeader, DialogTitle, DialogFooter,
 } from "@/components/ui/dialog";
-import { TreePine, Plus, Ruler } from "lucide-react";
+import { TreePine, Plus, Pencil, Trash2, Loader2, AlertTriangle } from "lucide-react";
+import { toast } from "sonner";
+
+interface FormState {
+  species: string; grade: string;
+  thickness: number; width: number; length: number;
+  dim_unit: string; length_unit: string;
+  price_per_unit: number; price_unit: string;
+  pieces: number; low_stock_threshold: number;
+}
+const empty: FormState = {
+  species: "", grade: "",
+  thickness: 2, width: 4, length: 12,
+  dim_unit: "in", length_unit: "ft",
+  price_per_unit: 0, price_unit: "piece",
+  pieces: 0, low_stock_threshold: 10,
+};
 
 export function TimberInventory() {
-  const { timber, addTimber } = usePOS();
-  const [open, setOpen] = useState(false);
-  const [form, setForm] = useState({
-    name: "",
-    description: "",
-    pieces: 100,
-    multiplier: 1,
-    quickLengths: "10,12,14",
-    sizes: "2x4:35,4x4:75",
-  });
+  const { activeBranchId } = useBranchSelection();
+  const { activeBusinessId, isBusinessAdmin, isSystemOwner } = useAuth();
+  const { items, loading, reload } = useTimber(activeBranchId);
+  const canEdit = isBusinessAdmin || isSystemOwner;
 
-  function submit() {
-    addTimber({
-      name: form.name,
-      description: form.description,
-      pieces: form.pieces,
-      multiplier: form.multiplier,
-      quickLengths: form.quickLengths.split(",").map((n) => Number(n.trim())).filter(Boolean),
-      sizes: form.sizes.split(",").map((s, i) => {
-        const [label, rate] = s.split(":");
-        return {
-          id: `s-new-${Date.now()}-${i}`,
-          label: label.trim(),
-          ratePerFt: Number(rate) || 0,
-        };
-      }),
+  const [open, setOpen] = useState(false);
+  const [editing, setEditing] = useState<CloudTimber | null>(null);
+  const [form, setForm] = useState<FormState>(empty);
+  const [busy, setBusy] = useState(false);
+
+  function startCreate() { setEditing(null); setForm(empty); setOpen(true); }
+  function startEdit(t: CloudTimber) {
+    setEditing(t);
+    setForm({
+      species: t.species, grade: t.grade ?? "",
+      thickness: Number(t.thickness), width: Number(t.width), length: Number(t.length),
+      dim_unit: t.dim_unit, length_unit: t.length_unit,
+      price_per_unit: Number(t.price_per_unit), price_unit: t.price_unit,
+      pieces: Number(t.pieces), low_stock_threshold: Number(t.low_stock_threshold),
     });
-    setOpen(false);
-    setForm({ name: "", description: "", pieces: 100, multiplier: 1, quickLengths: "10,12,14", sizes: "2x4:35,4x4:75" });
+    setOpen(true);
+  }
+
+  async function save() {
+    if (!activeBusinessId || !activeBranchId) return;
+    setBusy(true);
+    const payload = {
+      business_id: activeBusinessId, branch_id: activeBranchId,
+      species: form.species, grade: form.grade || null,
+      thickness: form.thickness, width: form.width, length: form.length,
+      dim_unit: form.dim_unit, length_unit: form.length_unit,
+      price_per_unit: form.price_per_unit, price_unit: form.price_unit,
+      pieces: form.pieces, low_stock_threshold: form.low_stock_threshold,
+    };
+    const { error } = editing
+      ? await supabase.from("timber_products").update(payload).eq("id", editing.id)
+      : await supabase.from("timber_products").insert(payload);
+    setBusy(false);
+    if (error) { toast.error(error.message); return; }
+    toast.success(editing ? "Updated" : "Added");
+    setOpen(false); reload();
+  }
+
+  async function remove(t: CloudTimber) {
+    if (!confirm(`Delete ${t.species} ${t.thickness}x${t.width}?`)) return;
+    const { error } = await supabase.from("timber_products").update({ is_active: false }).eq("id", t.id);
+    if (error) return toast.error(error.message);
+    toast.success("Removed"); reload();
   }
 
   return (
-    <div className="p-6 lg:p-8 space-y-6">
-      <header className="flex items-center justify-between">
+    <div className="p-4 md:p-6 lg:p-8 space-y-6">
+      <header className="flex items-center justify-between flex-wrap gap-3">
         <div>
-          <h1 className="text-3xl font-bold tracking-tight flex items-center gap-2">
-            <TreePine className="h-7 w-7 text-timber" /> Timber Yard
+          <h1 className="text-2xl md:text-3xl font-bold tracking-tight flex items-center gap-2">
+            <TreePine className="h-6 w-6 md:h-7 md:w-7 text-timber" /> Timber Yard
           </h1>
-          <p className="text-sm text-muted-foreground mt-1">
-            Manage wood types, dimensions and per-foot pricing.
-          </p>
+          <p className="text-sm text-muted-foreground mt-1">Wood species, dimensions, and per-unit pricing for the active branch.</p>
         </div>
-        <Button onClick={() => setOpen(true)} size="lg" className="bg-timber text-timber-foreground hover:bg-timber/90">
-          <Plus className="mr-2 h-4 w-4" /> Add Wood Type
-        </Button>
+        {canEdit && (
+          <Button onClick={startCreate} size="lg" className="bg-timber text-timber-foreground hover:bg-timber/90">
+            <Plus className="mr-2 h-4 w-4" /> Add Timber
+          </Button>
+        )}
       </header>
 
-      <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-        {timber.map((w) => (
-          <Card key={w.id} className="p-5">
-            <div className="flex items-start justify-between mb-3">
-              <div>
-                <h3 className="text-lg font-bold text-foreground">{w.name}</h3>
-                <p className="text-xs text-muted-foreground">{w.description}</p>
-              </div>
-              <div className="text-right">
-                <div className="text-2xl font-bold text-foreground">{w.pieces}</div>
-                <div className="text-[10px] uppercase tracking-wider text-muted-foreground">
-                  pieces
-                </div>
-              </div>
-            </div>
-            <div className="space-y-2 mb-3">
-              <div className="text-[10px] uppercase tracking-wider text-muted-foreground font-semibold">
-                Sizes & Rates (per ft, ×{w.multiplier})
-              </div>
-              <div className="grid grid-cols-2 gap-2">
-                {w.sizes.map((s) => (
-                  <div
-                    key={s.id}
-                    className="flex items-center justify-between rounded-md bg-secondary px-3 py-2"
-                  >
-                    <span className="text-sm font-bold">{s.label}</span>
-                    <span className="text-sm">{formatKsh(s.ratePerFt * w.multiplier)}/ft</span>
+      {loading ? (
+        <div className="p-8 text-center text-muted-foreground"><Loader2 className="h-5 w-5 animate-spin inline mr-2" /> Loading…</div>
+      ) : items.length === 0 ? (
+        <Card className="p-8 text-center text-muted-foreground">No timber yet for this branch.</Card>
+      ) : (
+        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
+          {items.map((t) => {
+            const low = t.pieces <= t.low_stock_threshold;
+            return (
+              <Card key={t.id} className="p-5">
+                <div className="flex items-start justify-between mb-3">
+                  <div>
+                    <h3 className="text-lg font-bold text-foreground">{t.species}</h3>
+                    <p className="text-xs text-muted-foreground">
+                      {t.thickness}×{t.width} {t.dim_unit} · {t.length} {t.length_unit}{t.grade ? ` · Grade ${t.grade}` : ""}
+                    </p>
                   </div>
-                ))}
-              </div>
-            </div>
-            <div className="flex items-center gap-2 text-xs text-muted-foreground border-t border-border pt-3">
-              <Ruler className="h-3 w-3" />
-              Quick lengths: {w.quickLengths.map((l) => `${l}ft`).join(" · ")}
-            </div>
-          </Card>
-        ))}
-      </div>
+                  <div className="text-right">
+                    <div className="text-2xl font-bold text-foreground">{t.pieces}</div>
+                    <div className="text-[10px] uppercase tracking-wider text-muted-foreground">pieces</div>
+                  </div>
+                </div>
+                <div className="flex items-center justify-between border-t border-border pt-3">
+                  <div>
+                    <div className="text-[10px] uppercase tracking-wider text-muted-foreground">Price</div>
+                    <div className="font-bold">{formatKsh(Number(t.price_per_unit))} / {t.price_unit}</div>
+                  </div>
+                  {low && <span className="inline-flex items-center gap-1 text-xs font-bold uppercase text-warning"><AlertTriangle className="h-3 w-3" /> Low</span>}
+                  {canEdit && (
+                    <div className="flex gap-1">
+                      <Button size="icon" variant="ghost" onClick={() => startEdit(t)}><Pencil className="h-4 w-4" /></Button>
+                      <Button size="icon" variant="ghost" onClick={() => remove(t)}><Trash2 className="h-4 w-4 text-destructive" /></Button>
+                    </div>
+                  )}
+                </div>
+              </Card>
+            );
+          })}
+        </div>
+      )}
 
       <Dialog open={open} onOpenChange={setOpen}>
         <DialogContent>
-          <DialogHeader>
-            <DialogTitle>Add Wood Type</DialogTitle>
-          </DialogHeader>
+          <DialogHeader><DialogTitle>{editing ? "Edit Timber" : "Add Timber"}</DialogTitle></DialogHeader>
           <div className="space-y-3">
-            <Input placeholder="Name (e.g. Mvule)" value={form.name} onChange={(e) => setForm({ ...form, name: e.target.value })} />
-            <Input placeholder="Description" value={form.description} onChange={(e) => setForm({ ...form, description: e.target.value })} />
             <div className="grid grid-cols-2 gap-2">
-              <Input type="number" placeholder="Pieces" value={form.pieces} onChange={(e) => setForm({ ...form, pieces: Number(e.target.value) })} />
-              <Input type="number" step="0.05" placeholder="Price multiplier" value={form.multiplier} onChange={(e) => setForm({ ...form, multiplier: Number(e.target.value) })} />
+              <div><Label>Species</Label><Input value={form.species} onChange={(e) => setForm({ ...form, species: e.target.value })} placeholder="Cypress" /></div>
+              <div><Label>Grade (optional)</Label><Input value={form.grade} onChange={(e) => setForm({ ...form, grade: e.target.value })} /></div>
             </div>
-            <Input placeholder="Quick lengths e.g. 10,12,14" value={form.quickLengths} onChange={(e) => setForm({ ...form, quickLengths: e.target.value })} />
-            <Input placeholder="Sizes e.g. 2x4:35,4x4:75" value={form.sizes} onChange={(e) => setForm({ ...form, sizes: e.target.value })} />
-            <p className="text-xs text-muted-foreground">Sizes format: dimension:rate-per-ft (comma separated)</p>
+            <div className="grid grid-cols-3 gap-2">
+              <div><Label>Thickness</Label><Input type="number" value={form.thickness} onChange={(e) => setForm({ ...form, thickness: Number(e.target.value) })} /></div>
+              <div><Label>Width</Label><Input type="number" value={form.width} onChange={(e) => setForm({ ...form, width: Number(e.target.value) })} /></div>
+              <div><Label>Length</Label><Input type="number" value={form.length} onChange={(e) => setForm({ ...form, length: Number(e.target.value) })} /></div>
+            </div>
+            <div className="grid grid-cols-2 gap-2">
+              <div><Label>Dim unit</Label><Input value={form.dim_unit} onChange={(e) => setForm({ ...form, dim_unit: e.target.value })} placeholder="in" /></div>
+              <div><Label>Length unit</Label><Input value={form.length_unit} onChange={(e) => setForm({ ...form, length_unit: e.target.value })} placeholder="ft" /></div>
+            </div>
+            <div className="grid grid-cols-2 gap-2">
+              <div><Label>Price</Label><Input type="number" value={form.price_per_unit} onChange={(e) => setForm({ ...form, price_per_unit: Number(e.target.value) })} /></div>
+              <div><Label>Per</Label><Input value={form.price_unit} onChange={(e) => setForm({ ...form, price_unit: e.target.value })} placeholder="piece / ft" /></div>
+            </div>
+            <div className="grid grid-cols-2 gap-2">
+              <div><Label>Pieces in stock</Label><Input type="number" value={form.pieces} onChange={(e) => setForm({ ...form, pieces: Number(e.target.value) })} /></div>
+              <div><Label>Low stock at</Label><Input type="number" value={form.low_stock_threshold} onChange={(e) => setForm({ ...form, low_stock_threshold: Number(e.target.value) })} /></div>
+            </div>
           </div>
           <DialogFooter>
             <Button variant="outline" onClick={() => setOpen(false)}>Cancel</Button>
-            <Button onClick={submit} disabled={!form.name}>Save</Button>
+            <Button onClick={save} disabled={!form.species || busy}>{busy && <Loader2 className="h-4 w-4 mr-1 animate-spin" />}Save</Button>
           </DialogFooter>
         </DialogContent>
       </Dialog>
