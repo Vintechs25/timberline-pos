@@ -17,6 +17,7 @@ import {
   MapPin,
   History,
   ClipboardList,
+  Truck,
 } from "lucide-react";
 import { cn } from "@/lib/utils";
 import { Sheet, SheetContent, SheetTrigger, SheetTitle } from "@/components/ui/sheet";
