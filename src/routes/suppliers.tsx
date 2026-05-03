@@ -1,11 +1,20 @@
 import { createFileRoute } from "@tanstack/react-router";
-import { SuppliersPage } from "@/components/pages/SuppliersPage";
+import { AppShell } from "@/components/layout/AppShell";
 import { RequireAuth } from "@/components/auth/RequireAuth";
+import { SuppliersPage } from "@/components/pages/SuppliersPage";
 
 export const Route = createFileRoute("/suppliers")({
+  head: () => ({
+    meta: [
+      { title: "Suppliers — TimberYard POS" },
+      { name: "description", content: "Manage suppliers, balances and payments." },
+    ],
+  }),
   component: () => (
     <RequireAuth>
-      <SuppliersPage />
+      <AppShell>
+        <SuppliersPage />
+      </AppShell>
     </RequireAuth>
   ),
 });
