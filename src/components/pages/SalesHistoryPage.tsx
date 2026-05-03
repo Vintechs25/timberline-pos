@@ -527,6 +527,28 @@ export function SalesHistoryPage() {
                   <Download className="h-4 w-4 mr-2" /> Download PDF
                 </Button>
               </div>
+              {(isBusinessAdmin || isSystemOwner) && openSale.status !== "refunded" && (
+                <Button
+                  variant="destructive"
+                  className="w-full"
+                  onClick={async () => {
+                    const reason = prompt("Refund reason?");
+                    if (reason == null) return;
+                    const { error } = await supabase.rpc("refund_sale", { _sale_id: openSale.id, _reason: reason });
+                    if (error) return toast.error(error.message);
+                    toast.success("Sale refunded — stock restored");
+                    setOpenSale(null);
+                    loadSales();
+                  }}
+                >
+                  Refund Sale
+                </Button>
+              )}
+              {openSale.status === "refunded" && (
+                <div className="rounded-md bg-destructive/10 text-destructive p-3 text-xs">
+                  Refunded{openSale.refund_reason ? ` — ${openSale.refund_reason}` : ""}
+                </div>
+              )}
             </div>
           )}
         </SheetContent>
