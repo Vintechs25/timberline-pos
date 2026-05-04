@@ -893,6 +893,23 @@ export type Database = {
       [_ in never]: never
     }
     Functions: {
+      create_sale: {
+        Args: {
+          _branch_id: string
+          _business_id: string
+          _customer_id: string
+          _customer_name: string
+          _discount: number
+          _items: Json
+          _original_total: number
+          _payment_method: string
+          _price_override: boolean
+          _status: string
+          _subtotal: number
+          _total: number
+        }
+        Returns: string
+      }
       get_mpesa_status: {
         Args: { _business_id: string }
         Returns: {
