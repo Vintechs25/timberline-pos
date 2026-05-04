@@ -247,7 +247,7 @@ export function POSScreen() {
       const { data: saleId, error } = await supabase.rpc("create_sale", {
         _business_id: activeBusinessId,
         _branch_id: activeBranchId,
-        _customer_id: activeCustomerId || null,
+        _customer_id: (activeCustomerId || null) as string,
         _customer_name: customer?.name ?? "Walk-in",
         _subtotal: subtotal,
         _discount: subtotal - finalTotal,
@@ -255,7 +255,7 @@ export function POSScreen() {
         _payment_method: method,
         _status: method === "credit" ? "credit" : "paid",
         _price_override: usingOverride,
-        _original_total: usingOverride ? computed : null,
+        _original_total: (usingOverride ? computed : null) as number,
         _items: itemsPayload as never,
       });
       if (error) throw error;
