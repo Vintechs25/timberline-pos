@@ -10,11 +10,24 @@ export interface UserRole {
   branch_id: string | null;
 }
 
+export interface BusinessFeatures {
+  hardware?: boolean;
+  timber?: boolean;
+  credit?: boolean;
+  reports?: boolean;
+  suppliers?: boolean;
+  customer_requests?: boolean;
+  mpesa?: boolean;
+  refunds?: boolean;
+  price_override?: boolean;
+}
+
 export interface BusinessSummary {
   id: string;
   name: string;
   slug: string;
   status: "active" | "suspended" | "revoked";
+  features?: BusinessFeatures | null;
 }
 
 interface AuthContextValue {
