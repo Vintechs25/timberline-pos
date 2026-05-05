@@ -130,6 +130,14 @@ export function AuthProvider({ children }: { children: ReactNode }) {
   const isCashier = roles.some((r) => r.role === "cashier");
   const isStaff = roles.some((r) => r.role === "staff" || r.role === "cashier" || r.role === "supervisor");
 
+  const activeBiz = businesses.find((b) => b.id === activeBusinessId);
+  const features: BusinessFeatures = (activeBiz?.features as BusinessFeatures | null) ?? {};
+  const hasFeature = (key: keyof BusinessFeatures) => {
+    if (isSystemOwner) return true;
+    // Default to true if undefined for backward compat
+    return features[key] !== false;
+  };
+
   const signOut = async () => {
     await supabase.auth.signOut();
   };
@@ -149,6 +157,8 @@ export function AuthProvider({ children }: { children: ReactNode }) {
         isSupervisor,
         isCashier,
         isStaff,
+        features,
+        hasFeature,
         signOut,
         refresh,
       }}
