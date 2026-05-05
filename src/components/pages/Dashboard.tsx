@@ -1,51 +1,83 @@
-import { usePOS, formatKsh } from "@/lib/store";
+import { useMemo } from "react";
 import { Card } from "@/components/ui/card";
 import {
   TrendingUp,
   ShoppingCart,
   AlertTriangle,
-  Users,
   Receipt,
   TreePine,
+  Building2,
+  Users,
+  Package,
+  ShieldCheck,
+  ShieldOff,
 } from "lucide-react";
 import { Link } from "@tanstack/react-router";
 import { Button } from "@/components/ui/button";
+import { useAuth } from "@/lib/auth-context";
+import {
+  useBranchSelection,
+  useHardware,
+  useTimber,
+  useCustomers,
+  useSales,
+  formatKsh,
+} from "@/lib/cloud-store";
+import { SystemOwnerDashboard } from "./SystemOwnerDashboard";
 
 export function Dashboard() {
-  const { sales, hardware, timber, customers } = usePOS();
+  const { isSystemOwner, activeBusinessId, businesses } = useAuth();
+  const { activeBranchId } = useBranchSelection();
 
-  const today = new Date().toDateString();
-  const todaysSales = sales.filter((s) => new Date(s.date).toDateString() === today);
-  const todayRevenue = todaysSales.reduce((sum, s) => sum + s.total, 0);
-  const lowStock = hardware.filter((h) => h.stock <= h.reorderLevel);
-  const outstanding = customers.reduce((sum, c) => sum + c.balance, 0);
-  const lowTimber = timber.filter((t) => t.pieces < 100);
+  // System owners get a platform-wide dashboard when no business selected,
+  // otherwise they see the business dashboard for the active business too.
+  if (isSystemOwner && !activeBusinessId) {
+    return <SystemOwnerDashboard />;
+  }
+
+  const business = businesses.find((b) => b.id === activeBusinessId);
+  const { items: hardware } = useHardware(activeBranchId);
+  const { items: timber } = useTimber(activeBranchId);
+  const { items: customers } = useCustomers();
+  const { items: sales } = useSales(activeBranchId);
+
+  const stats = useMemo(() => {
+    const today = new Date().toDateString();
+    const todays = sales.filter(
+      (s) => new Date(s.created_at).toDateString() === today && s.status !== "refunded",
+    );
+    const todayRevenue = todays.reduce((sum, s) => sum + Number(s.total), 0);
+    const lowHardware = hardware.filter((h) => h.stock <= h.low_stock_threshold);
+    const lowTimber = timber.filter((t) => t.pieces <= t.low_stock_threshold);
+    const outstanding = customers.reduce((sum, c) => sum + Number(c.balance), 0);
+    return { todays, todayRevenue, lowHardware, lowTimber, outstanding };
+  }, [sales, hardware, timber, customers]);
 
   const cards = [
     {
       label: "Today's Revenue",
-      value: formatKsh(todayRevenue),
-      sub: `${todaysSales.length} transactions`,
+      value: formatKsh(stats.todayRevenue),
+      sub: `${stats.todays.length} transactions`,
       icon: TrendingUp,
       tone: "bg-[image:var(--gradient-amber)] text-accent-foreground",
     },
     {
       label: "Sales Today",
-      value: todaysSales.length.toString(),
-      sub: "across all categories",
+      value: stats.todays.length.toString(),
+      sub: "across categories",
       icon: ShoppingCart,
       tone: "bg-primary text-primary-foreground",
     },
     {
       label: "Outstanding Credit",
-      value: formatKsh(outstanding),
-      sub: `${customers.filter((c) => c.balance > 0).length} accounts`,
+      value: formatKsh(stats.outstanding),
+      sub: `${customers.filter((c) => Number(c.balance) > 0).length} accounts`,
       icon: Receipt,
       tone: "bg-card text-foreground border border-border",
     },
     {
       label: "Low Stock Alerts",
-      value: (lowStock.length + lowTimber.length).toString(),
+      value: (stats.lowHardware.length + stats.lowTimber.length).toString(),
       sub: "items need restocking",
       icon: AlertTriangle,
       tone: "bg-card text-foreground border border-border",
@@ -56,7 +88,9 @@ export function Dashboard() {
     <div className="p-6 lg:p-8 space-y-6">
       <header className="flex flex-col sm:flex-row sm:items-end sm:justify-between gap-3">
         <div>
-          <h1 className="text-3xl font-bold tracking-tight text-foreground">Yard Overview</h1>
+          <h1 className="text-3xl font-bold tracking-tight text-foreground">
+            {business?.name ?? "Dashboard"}
+          </h1>
           <p className="text-sm text-muted-foreground mt-1">
             {new Date().toLocaleDateString("en-US", {
               weekday: "long",
@@ -77,7 +111,7 @@ export function Dashboard() {
         {cards.map((c) => (
           <Card
             key={c.label}
-            className={`p-5 shadow-[var(--shadow-soft)] hover:shadow-[var(--shadow-elevated)] transition-shadow ${c.tone}`}
+            className={`p-5 shadow-[var(--shadow-soft)] ${c.tone}`}
           >
             <div className="flex items-start justify-between">
               <div>
@@ -98,33 +132,45 @@ export function Dashboard() {
           <div className="flex items-center justify-between mb-4">
             <h2 className="text-lg font-semibold text-foreground">Recent Sales</h2>
             <Button variant="ghost" size="sm" asChild>
-              <Link to="/reports">View all</Link>
+              <Link to="/sales-history">View all</Link>
             </Button>
           </div>
           <div className="space-y-2">
+            {sales.length === 0 && (
+              <p className="text-sm text-muted-foreground">No sales yet.</p>
+            )}
             {sales.slice(0, 6).map((s) => (
               <div
                 key={s.id}
                 className="flex items-center justify-between py-3 border-b border-border last:border-0"
               >
                 <div>
-                  <div className="text-sm font-medium text-foreground">{s.customerName}</div>
+                  <div className="text-sm font-medium text-foreground">
+                    {s.customer_name ?? "Walk-in"}
+                  </div>
                   <div className="text-xs text-muted-foreground">
-                    {new Date(s.date).toLocaleString("en-KE", {
+                    {new Date(s.created_at).toLocaleString("en-KE", {
                       month: "short",
                       day: "numeric",
                       hour: "2-digit",
                       minute: "2-digit",
                     })}
                     {" · "}
-                    <span className="uppercase">{s.payment}</span>
+                    <span className="uppercase">{s.payment_method}</span>
                   </div>
                 </div>
                 <div className="text-right">
-                  <div className="text-sm font-bold text-foreground">{formatKsh(s.total)}</div>
+                  <div className="text-sm font-bold text-foreground">
+                    {formatKsh(Number(s.total))}
+                  </div>
                   {s.status === "credit" && (
                     <div className="text-[10px] uppercase font-semibold text-warning">
                       On Credit
+                    </div>
+                  )}
+                  {s.status === "refunded" && (
+                    <div className="text-[10px] uppercase font-semibold text-destructive">
+                      Refunded
                     </div>
                   )}
                 </div>
@@ -139,25 +185,27 @@ export function Dashboard() {
             <AlertTriangle className="h-4 w-4 text-warning" />
           </div>
           <div className="space-y-3">
-            {lowTimber.length === 0 && lowStock.length === 0 && (
+            {stats.lowTimber.length === 0 && stats.lowHardware.length === 0 && (
               <p className="text-sm text-muted-foreground">All stock healthy.</p>
             )}
-            {lowTimber.slice(0, 3).map((t) => (
+            {stats.lowTimber.slice(0, 3).map((t) => (
               <div key={t.id} className="flex items-center gap-3">
                 <TreePine className="h-4 w-4 text-timber" />
                 <div className="flex-1 min-w-0">
-                  <div className="text-sm font-medium truncate">{t.name}</div>
+                  <div className="text-sm font-medium truncate">
+                    {t.species} {t.thickness}×{t.width}×{t.length}
+                  </div>
                   <div className="text-xs text-muted-foreground">{t.pieces} pieces left</div>
                 </div>
               </div>
             ))}
-            {lowStock.slice(0, 5).map((h) => (
+            {stats.lowHardware.slice(0, 5).map((h) => (
               <div key={h.id} className="flex items-center gap-3">
-                <div className="h-4 w-4 rounded-sm bg-hardware" />
+                <Package className="h-4 w-4 text-hardware" />
                 <div className="flex-1 min-w-0">
                   <div className="text-sm font-medium truncate">{h.name}</div>
                   <div className="text-xs text-warning">
-                    {h.stock} {h.unit} (reorder at {h.reorderLevel})
+                    {h.stock} {h.unit} (reorder at {h.low_stock_threshold})
                   </div>
                 </div>
               </div>
@@ -171,6 +219,21 @@ export function Dashboard() {
           </Button>
         </Card>
       </div>
+
+      {isSystemOwner && (
+        <Card className="p-4 flex items-center gap-3 border-primary/20">
+          <Building2 className="h-5 w-5 text-primary" />
+          <div className="flex-1 text-sm">
+            <span className="font-semibold">System Owner view.</span>{" "}
+            <span className="text-muted-foreground">
+              Switch to platform overview from the Admin panel.
+            </span>
+          </div>
+          <Button asChild size="sm" variant="outline">
+            <Link to="/admin">Open Admin</Link>
+          </Button>
+        </Card>
+      )}
     </div>
   );
 }
