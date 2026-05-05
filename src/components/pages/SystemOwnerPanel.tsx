@@ -36,10 +36,12 @@ import {
   Eye,
   EyeOff,
   Smartphone,
+  SlidersHorizontal,
 } from "lucide-react";
 import { toast } from "sonner";
 import { useAuth } from "@/lib/auth-context";
 import { MpesaConfigDialog } from "./MpesaConfigDialog";
+import { BusinessFeaturesDialog } from "./BusinessFeaturesDialog";
 
 interface Business {
   id: string;
