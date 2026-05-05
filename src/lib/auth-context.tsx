@@ -70,7 +70,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
   const loadUserData = async (uid: string) => {
     const [{ data: rolesData }, { data: bizData }] = await Promise.all([
       supabase.from("user_roles").select("role,business_id,branch_id").eq("user_id", uid),
-      supabase.from("businesses").select("id,name,slug,status").order("name"),
+      supabase.from("businesses").select("id,name,slug,status,features").order("name"),
     ]);
     setRoles((rolesData as UserRole[]) ?? []);
     setBusinesses((bizData as BusinessSummary[]) ?? []);
