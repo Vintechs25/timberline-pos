@@ -10,11 +10,24 @@ export interface UserRole {
   branch_id: string | null;
 }
 
+export interface BusinessFeatures {
+  hardware?: boolean;
+  timber?: boolean;
+  credit?: boolean;
+  reports?: boolean;
+  suppliers?: boolean;
+  customer_requests?: boolean;
+  mpesa?: boolean;
+  refunds?: boolean;
+  price_override?: boolean;
+}
+
 export interface BusinessSummary {
   id: string;
   name: string;
   slug: string;
   status: "active" | "suspended" | "revoked";
+  features?: BusinessFeatures | null;
 }
 
 interface AuthContextValue {
@@ -30,6 +43,8 @@ interface AuthContextValue {
   isSupervisor: boolean;
   isCashier: boolean;
   isStaff: boolean;
+  features: BusinessFeatures;
+  hasFeature: (key: keyof BusinessFeatures) => boolean;
   signOut: () => Promise<void>;
   refresh: () => Promise<void>;
 }
@@ -57,7 +72,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
   const loadUserData = async (uid: string) => {
     const [{ data: rolesData }, { data: bizData }] = await Promise.all([
       supabase.from("user_roles").select("role,business_id,branch_id").eq("user_id", uid),
-      supabase.from("businesses").select("id,name,slug,status").order("name"),
+      supabase.from("businesses").select("id,name,slug,status,features").order("name"),
     ]);
     setRoles((rolesData as UserRole[]) ?? []);
     setBusinesses((bizData as BusinessSummary[]) ?? []);
@@ -115,6 +130,14 @@ export function AuthProvider({ children }: { children: ReactNode }) {
   const isCashier = roles.some((r) => r.role === "cashier");
   const isStaff = roles.some((r) => r.role === "staff" || r.role === "cashier" || r.role === "supervisor");
 
+  const activeBiz = businesses.find((b) => b.id === activeBusinessId);
+  const features: BusinessFeatures = (activeBiz?.features as BusinessFeatures | null) ?? {};
+  const hasFeature = (key: keyof BusinessFeatures) => {
+    if (isSystemOwner) return true;
+    // Default to true if undefined for backward compat
+    return features[key] !== false;
+  };
+
   const signOut = async () => {
     await supabase.auth.signOut();
   };
@@ -134,6 +157,8 @@ export function AuthProvider({ children }: { children: ReactNode }) {
         isSupervisor,
         isCashier,
         isStaff,
+        features,
+        hasFeature,
         signOut,
         refresh,
       }}

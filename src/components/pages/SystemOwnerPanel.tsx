@@ -36,10 +36,12 @@ import {
   Eye,
   EyeOff,
   Smartphone,
+  SlidersHorizontal,
 } from "lucide-react";
 import { toast } from "sonner";
 import { useAuth } from "@/lib/auth-context";
 import { MpesaConfigDialog } from "./MpesaConfigDialog";
+import { BusinessFeaturesDialog } from "./BusinessFeaturesDialog";
 
 interface Business {
   id: string;
@@ -62,6 +64,7 @@ export function SystemOwnerPanel() {
   const [open, setOpen] = useState(false);
   const [busy, setBusy] = useState(false);
   const [mpesaTarget, setMpesaTarget] = useState<{ id: string; name: string } | null>(null);
+  const [featuresTarget, setFeaturesTarget] = useState<{ id: string; name: string } | null>(null);
 
   // Form state
   const [name, setName] = useState("");
@@ -497,6 +500,14 @@ export function SystemOwnerPanel() {
                             >
                               <Smartphone className="h-3.5 w-3.5" />
                             </Button>
+                            <Button
+                              variant="outline"
+                              size="sm"
+                              title="Toggle features"
+                              onClick={() => setFeaturesTarget({ id: b.id, name: b.name })}
+                            >
+                              <SlidersHorizontal className="h-3.5 w-3.5" />
+                            </Button>
                           </div>
                         </TableCell>
                       </TableRow>
@@ -515,6 +526,15 @@ export function SystemOwnerPanel() {
           businessName={mpesaTarget.name}
           open={!!mpesaTarget}
           onOpenChange={(o) => !o && setMpesaTarget(null)}
+        />
+      )}
+      {featuresTarget && (
+        <BusinessFeaturesDialog
+          businessId={featuresTarget.id}
+          businessName={featuresTarget.name}
+          open={!!featuresTarget}
+          onOpenChange={(o) => !o && setFeaturesTarget(null)}
+          onSaved={() => { load(); refresh(); }}
         />
       )}
     </div>
