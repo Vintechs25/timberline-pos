@@ -528,6 +528,15 @@ export function SystemOwnerPanel() {
           onOpenChange={(o) => !o && setMpesaTarget(null)}
         />
       )}
+      {featuresTarget && (
+        <BusinessFeaturesDialog
+          businessId={featuresTarget.id}
+          businessName={featuresTarget.name}
+          open={!!featuresTarget}
+          onOpenChange={(o) => !o && setFeaturesTarget(null)}
+          onSaved={() => { load(); refresh(); }}
+        />
+      )}
     </div>
   );
 }
