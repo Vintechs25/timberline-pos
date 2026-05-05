@@ -47,18 +47,19 @@ type NavItem = {
   icon: typeof LayoutDashboard;
   highlight?: boolean;
   roles?: ("system_owner" | "business_admin" | "supervisor" | "cashier" | "staff")[];
+  feature?: "hardware" | "timber" | "credit" | "reports" | "suppliers" | "customer_requests";
 };
 
 const allNav: NavItem[] = [
   { to: "/", label: "Dashboard", icon: LayoutDashboard },
   { to: "/pos", label: "Point of Sale", icon: ShoppingCart, highlight: true },
   { to: "/sales-history", label: "Sales History", icon: History },
-  { to: "/customer-requests", label: "Customer Requests", icon: ClipboardList },
-  { to: "/timber", label: "Timber Yard", icon: TreePine },
-  { to: "/inventory", label: "Hardware", icon: Package },
-  { to: "/customers", label: "Customers", icon: Users },
-  { to: "/suppliers", label: "Suppliers", icon: Truck, roles: ["system_owner", "business_admin", "supervisor"] },
-  { to: "/reports", label: "Reports", icon: BarChart3, roles: ["system_owner", "business_admin", "supervisor"] },
+  { to: "/customer-requests", label: "Customer Requests", icon: ClipboardList, feature: "customer_requests" },
+  { to: "/timber", label: "Timber Yard", icon: TreePine, feature: "timber" },
+  { to: "/inventory", label: "Hardware", icon: Package, feature: "hardware" },
+  { to: "/customers", label: "Customers", icon: Users, feature: "credit" },
+  { to: "/suppliers", label: "Suppliers", icon: Truck, roles: ["system_owner", "business_admin", "supervisor"], feature: "suppliers" },
+  { to: "/reports", label: "Reports", icon: BarChart3, roles: ["system_owner", "business_admin", "supervisor"], feature: "reports" },
   { to: "/business", label: "Business", icon: Building2, roles: ["system_owner", "business_admin"] },
   { to: "/admin", label: "Admin", icon: Shield, roles: ["system_owner"] },
 ];
