@@ -43,6 +43,8 @@ interface AuthContextValue {
   isSupervisor: boolean;
   isCashier: boolean;
   isStaff: boolean;
+  features: BusinessFeatures;
+  hasFeature: (key: keyof BusinessFeatures) => boolean;
   signOut: () => Promise<void>;
   refresh: () => Promise<void>;
 }
