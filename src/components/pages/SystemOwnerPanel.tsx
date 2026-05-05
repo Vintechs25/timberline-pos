@@ -500,6 +500,14 @@ export function SystemOwnerPanel() {
                             >
                               <Smartphone className="h-3.5 w-3.5" />
                             </Button>
+                            <Button
+                              variant="outline"
+                              size="sm"
+                              title="Toggle features"
+                              onClick={() => setFeaturesTarget({ id: b.id, name: b.name })}
+                            >
+                              <SlidersHorizontal className="h-3.5 w-3.5" />
+                            </Button>
                           </div>
                         </TableCell>
                       </TableRow>
