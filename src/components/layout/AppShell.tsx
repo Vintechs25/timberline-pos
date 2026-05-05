@@ -281,7 +281,7 @@ export function AppShell({ children }: { children: React.ReactNode }) {
     const v = localStorage.getItem(SIDEBAR_OPEN_KEY);
     return v === "1";
   });
-  const { roles, user } = useAuth();
+  const { roles, user, hasFeature } = useAuth();
   const userRoles = new Set(roles.map((r) => r.role));
 
   useEffect(() => {
@@ -291,7 +291,9 @@ export function AppShell({ children }: { children: React.ReactNode }) {
   }, [desktopOpen]);
 
   const items = allNav.filter(
-    (i) => !i.roles || i.roles.some((r) => userRoles.has(r)),
+    (i) =>
+      (!i.roles || i.roles.some((r) => userRoles.has(r))) &&
+      (!i.feature || hasFeature(i.feature)),
   );
 
   const currentLabel = items.find((n) =>
