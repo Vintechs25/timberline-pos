@@ -39,6 +39,17 @@ export function CustomersPage() {
   const [form, setForm] = useState<FormState>(empty);
   const [busy, setBusy] = useState(false);
   const [search, setSearch] = useState("");
+  const [typeFilter, setTypeFilter] = useState<string>("all");
+  const [balanceFilter, setBalanceFilter] = useState<"all" | "owing" | "clear">("all");
+  const [selected, setSelected] = useState<Set<string>>(new Set());
+
+  function toggleOne(id: string) { const n = new Set(selected); n.has(id) ? n.delete(id) : n.add(id); setSelected(n); }
+  async function bulkDelete() {
+    if (!selected.size || !confirm(`Delete ${selected.size} customer(s)?`)) return;
+    const { error } = await supabase.from("customers").delete().in("id", Array.from(selected));
+    if (error) return toast.error(error.message);
+    toast.success(`Deleted ${selected.size}`); setSelected(new Set()); reload();
+  }
 
   const filtered = customers.filter((c) => {
     if (c.name.toLowerCase() === "walk-in") return false;
