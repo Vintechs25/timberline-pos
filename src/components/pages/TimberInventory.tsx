@@ -9,8 +9,11 @@ import { Label } from "@/components/ui/label";
 import {
   Dialog, DialogContent, DialogHeader, DialogTitle, DialogFooter,
 } from "@/components/ui/dialog";
-import { TreePine, Plus, Pencil, Trash2, Loader2, AlertTriangle } from "lucide-react";
+import { TreePine, Plus, Pencil, Trash2, Loader2, AlertTriangle, Sparkles, Search } from "lucide-react";
 import { toast } from "sonner";
+import { Checkbox } from "@/components/ui/checkbox";
+import { BulkImportDialog } from "@/components/inventory/BulkImportDialog";
+import { ExportMenu } from "@/components/shared/ExportMenu";
 
 interface FormState {
   species: string; grade: string;
