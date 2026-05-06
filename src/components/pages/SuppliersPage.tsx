@@ -124,7 +124,22 @@ export function SuppliersPage() {
           </h1>
           <p className="text-sm text-muted-foreground mt-1">Manage suppliers, balances and payments.</p>
         </div>
-        {canEdit && <Button onClick={startCreate} size="lg"><Plus className="mr-2 h-4 w-4" /> Add Supplier</Button>}
+        <div className="flex gap-2 flex-wrap">
+          <ExportMenu
+            filename="suppliers"
+            title="Suppliers"
+            columns={[
+              { key: "name", label: "Name" }, { key: "contact_person", label: "Contact" },
+              { key: "phone", label: "Phone" }, { key: "email", label: "Email" },
+              { key: "balance", label: "Balance" }, { key: "address", label: "Address" },
+            ]}
+            rows={filtered.map((s) => ({
+              name: s.name, contact_person: s.contact_person ?? "", phone: s.phone ?? "",
+              email: s.email ?? "", balance: Number(s.balance), address: s.address ?? "",
+            }))}
+          />
+          {canEdit && <Button onClick={startCreate}><Plus className="mr-2 h-4 w-4" /> Add Supplier</Button>}
+        </div>
       </header>
 
       <div className="grid grid-cols-1 sm:grid-cols-3 gap-4">
@@ -133,20 +148,33 @@ export function SuppliersPage() {
         <Card className="p-5"><div className="text-xs uppercase tracking-wider text-muted-foreground">With Outstanding</div><div className="text-2xl font-bold mt-1">{items.filter((s) => Number(s.balance) > 0).length}</div></Card>
       </div>
 
+      <div className="flex flex-wrap gap-2 items-center">
+        <div className="relative max-w-md flex-1 min-w-[200px]">
+          <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground" />
+          <Input value={search} onChange={(e) => setSearch(e.target.value)} placeholder="Search suppliers..." className="pl-9" />
+        </div>
+        {canEdit && selected.size > 0 && (
+          <Button variant="destructive" size="sm" onClick={bulkDelete}><Trash2 className="h-4 w-4 mr-1" /> Remove {selected.size}</Button>
+        )}
+      </div>
+
       {loading ? (
         <div className="p-8 text-center text-muted-foreground"><Loader2 className="h-5 w-5 animate-spin inline mr-2" /> Loading…</div>
-      ) : items.length === 0 ? (
-        <Card className="p-8 text-center text-muted-foreground">No suppliers yet. Add your first supplier to track purchases and balances.</Card>
+      ) : filtered.length === 0 ? (
+        <Card className="p-8 text-center text-muted-foreground">No suppliers match.</Card>
       ) : (
         <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-          {items.map((s) => (
+          {filtered.map((s) => (
             <Card key={s.id} className="p-5">
               <div className="flex items-start justify-between mb-2">
-                <div>
+                <div className="flex items-start gap-2">
+                  {canEdit && <Checkbox checked={selected.has(s.id)} onCheckedChange={() => toggleOne(s.id)} className="mt-1" />}
+                  <div>
                   <div className="font-bold text-lg">{s.name}</div>
                   {s.contact_person && <div className="text-xs text-muted-foreground">{s.contact_person}</div>}
                   {s.phone && <div className="text-xs text-muted-foreground flex items-center gap-1 mt-0.5"><Phone className="h-3 w-3" /> {s.phone}</div>}
                   {s.address && <div className="text-xs text-muted-foreground mt-0.5">{s.address}</div>}
+                  </div>
                 </div>
                 <div className="text-right">
                   <div className="text-[10px] uppercase tracking-wider text-muted-foreground">Balance Owed</div>
