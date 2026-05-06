@@ -269,11 +269,30 @@ export function SalesHistoryPage() {
 
   return (
     <div className="p-3 md:p-6 space-y-4 md:space-y-6">
-      <div className="flex flex-col gap-1">
-        <h1 className="text-2xl md:text-3xl font-bold tracking-tight">Sales History</h1>
-        <p className="text-sm text-muted-foreground">
-          Browse, search and reprint past sales{canViewAll ? " across branches." : " in your branch."}
-        </p>
+      <div className="flex items-start justify-between gap-2 flex-wrap">
+        <div className="flex flex-col gap-1">
+          <h1 className="text-2xl md:text-3xl font-bold tracking-tight">Sales History</h1>
+          <p className="text-sm text-muted-foreground">
+            Browse, search and reprint past sales{canViewAll ? " across branches." : " in your branch."}
+          </p>
+        </div>
+        <ExportMenu
+          filename="sales-history"
+          title="Sales History"
+          columns={[
+            { key: "receipt_no", label: "Receipt" }, { key: "date", label: "Date" },
+            { key: "customer", label: "Customer" }, { key: "payment", label: "Payment" },
+            { key: "status", label: "Status" }, { key: "subtotal", label: "Subtotal" },
+            { key: "discount", label: "Discount" }, { key: "total", label: "Total" },
+          ]}
+          rows={sales.map((s) => ({
+            receipt_no: s.receipt_no ?? s.id.slice(-6),
+            date: new Date(s.created_at).toLocaleString(),
+            customer: s.customer_name ?? "Walk-in",
+            payment: s.payment_method, status: s.status,
+            subtotal: Number(s.subtotal), discount: Number(s.discount), total: Number(s.total),
+          }))}
+        />
       </div>
 
       {/* Summary tiles */}
