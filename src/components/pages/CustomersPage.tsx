@@ -15,6 +15,8 @@ import {
 } from "@/components/ui/select";
 import { Users, Plus, HardHat, User as UserIcon, Phone, Pencil, Trash2, Loader2, Search } from "lucide-react";
 import { toast } from "sonner";
+import { Checkbox } from "@/components/ui/checkbox";
+import { ExportMenu } from "@/components/shared/ExportMenu";
 
 interface FormState {
   name: string; type: string; phone: string; email: string;
@@ -37,12 +39,28 @@ export function CustomersPage() {
   const [form, setForm] = useState<FormState>(empty);
   const [busy, setBusy] = useState(false);
   const [search, setSearch] = useState("");
+  const [typeFilter, setTypeFilter] = useState<string>("all");
+  const [balanceFilter, setBalanceFilter] = useState<"all" | "owing" | "clear">("all");
+  const [selected, setSelected] = useState<Set<string>>(new Set());
+
+  function toggleOne(id: string) { const n = new Set(selected); n.has(id) ? n.delete(id) : n.add(id); setSelected(n); }
+  async function bulkDelete() {
+    if (!selected.size || !confirm(`Delete ${selected.size} customer(s)?`)) return;
+    const { error } = await supabase.from("customers").delete().in("id", Array.from(selected));
+    if (error) return toast.error(error.message);
+    toast.success(`Deleted ${selected.size}`); setSelected(new Set()); reload();
+  }
 
   const filtered = customers.filter((c) => {
     if (c.name.toLowerCase() === "walk-in") return false;
-    if (!search.trim()) return true;
-    const q = search.toLowerCase();
-    return c.name.toLowerCase().includes(q) || (c.phone ?? "").includes(q);
+    if (search.trim()) {
+      const q = search.toLowerCase();
+      if (!(c.name.toLowerCase().includes(q) || (c.phone ?? "").includes(q))) return false;
+    }
+    if (typeFilter !== "all" && c.type !== typeFilter) return false;
+    if (balanceFilter === "owing" && Number(c.balance) <= 0) return false;
+    if (balanceFilter === "clear" && Number(c.balance) > 0) return false;
+    return true;
   });
 
   const totalOutstanding = customers.reduce((s, c) => s + Number(c.balance), 0);
@@ -94,7 +112,23 @@ export function CustomersPage() {
           </h1>
           <p className="text-sm text-muted-foreground mt-1">Contractor accounts, balances and custom pricing.</p>
         </div>
-        <Button onClick={startCreate} size="lg"><Plus className="mr-2 h-4 w-4" /> Add Customer</Button>
+        <div className="flex gap-2 flex-wrap">
+          <ExportMenu
+            filename="customers"
+            title="Customers"
+            columns={[
+              { key: "name", label: "Name" }, { key: "type", label: "Type" }, { key: "phone", label: "Phone" },
+              { key: "email", label: "Email" }, { key: "credit_limit", label: "Credit Limit" },
+              { key: "balance", label: "Balance" }, { key: "loyalty_discount_pct", label: "Loyalty %" },
+            ]}
+            rows={filtered.map((c) => ({
+              name: c.name, type: c.type, phone: c.phone ?? "", email: c.email ?? "",
+              credit_limit: Number(c.credit_limit), balance: Number(c.balance),
+              loyalty_discount_pct: Number(c.loyalty_discount_pct),
+            }))}
+          />
+          <Button onClick={startCreate}><Plus className="mr-2 h-4 w-4" /> Add Customer</Button>
+        </div>
       </header>
 
       <div className="grid grid-cols-1 sm:grid-cols-3 gap-4">
@@ -103,10 +137,33 @@ export function CustomersPage() {
         <Card className="p-5"><div className="text-xs uppercase tracking-wider text-muted-foreground">Active Customers</div><div className="text-2xl font-bold mt-1">{filtered.length}</div></Card>
       </div>
 
-      <div className="relative max-w-md">
-        <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground" />
-        <Input value={search} onChange={(e) => setSearch(e.target.value)} placeholder="Search by name or phone..." className="pl-9" />
+      <div className="flex flex-wrap gap-2 items-center">
+        <div className="relative max-w-md flex-1 min-w-[200px]">
+          <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground" />
+          <Input value={search} onChange={(e) => setSearch(e.target.value)} placeholder="Search by name or phone..." className="pl-9" />
+        </div>
+        <Select value={typeFilter} onValueChange={setTypeFilter}>
+          <SelectTrigger className="w-[140px]"><SelectValue /></SelectTrigger>
+          <SelectContent>
+            <SelectItem value="all">All types</SelectItem>
+            <SelectItem value="contractor">Contractor</SelectItem>
+            <SelectItem value="walkin">Walk-in</SelectItem>
+            <SelectItem value="business">Business</SelectItem>
+          </SelectContent>
+        </Select>
+        <Select value={balanceFilter} onValueChange={(v) => setBalanceFilter(v as typeof balanceFilter)}>
+          <SelectTrigger className="w-[140px]"><SelectValue /></SelectTrigger>
+          <SelectContent>
+            <SelectItem value="all">All balances</SelectItem>
+            <SelectItem value="owing">Owing</SelectItem>
+            <SelectItem value="clear">Clear</SelectItem>
+          </SelectContent>
+        </Select>
+        {canEdit && selected.size > 0 && (
+          <Button variant="destructive" size="sm" onClick={bulkDelete}><Trash2 className="h-4 w-4 mr-1" /> Delete {selected.size}</Button>
+        )}
       </div>
+
 
       {loading ? (
         <div className="p-8 text-center text-muted-foreground"><Loader2 className="h-5 w-5 animate-spin inline mr-2" /> Loading…</div>
@@ -121,6 +178,7 @@ export function CustomersPage() {
               <Card key={c.id} className="p-5">
                 <div className="flex items-start justify-between mb-3">
                   <div className="flex items-start gap-3">
+                    {canEdit && <Checkbox checked={selected.has(c.id)} onCheckedChange={() => toggleOne(c.id)} className="mt-2" />}
                     <div className="h-10 w-10 rounded-full bg-primary/10 flex items-center justify-center">
                       {c.type === "contractor" ? <HardHat className="h-5 w-5 text-primary" /> : <UserIcon className="h-5 w-5 text-primary" />}
                     </div>

@@ -9,8 +9,11 @@ import { Label } from "@/components/ui/label";
 import {
   Dialog, DialogContent, DialogHeader, DialogTitle, DialogFooter,
 } from "@/components/ui/dialog";
-import { TreePine, Plus, Pencil, Trash2, Loader2, AlertTriangle } from "lucide-react";
+import { TreePine, Plus, Pencil, Trash2, Loader2, AlertTriangle, Sparkles, Search } from "lucide-react";
 import { toast } from "sonner";
+import { Checkbox } from "@/components/ui/checkbox";
+import { BulkImportDialog } from "@/components/inventory/BulkImportDialog";
+import { ExportMenu } from "@/components/shared/ExportMenu";
 
 interface FormState {
   species: string; grade: string;
@@ -34,9 +37,27 @@ export function TimberInventory() {
   const canEdit = isBusinessAdmin || isSystemOwner;
 
   const [open, setOpen] = useState(false);
+  const [importOpen, setImportOpen] = useState(false);
   const [editing, setEditing] = useState<CloudTimber | null>(null);
   const [form, setForm] = useState<FormState>(empty);
   const [busy, setBusy] = useState(false);
+  const [search, setSearch] = useState("");
+  const [selected, setSelected] = useState<Set<string>>(new Set());
+
+  const filteredItems = items.filter((t) => {
+    if (!search.trim()) return true;
+    const q = search.toLowerCase();
+    return t.species.toLowerCase().includes(q) || (t.grade ?? "").toLowerCase().includes(q);
+  });
+
+  async function bulkDelete() {
+    if (!selected.size || !confirm(`Delete ${selected.size} item(s)?`)) return;
+    const { error } = await supabase.from("timber_products").update({ is_active: false }).in("id", Array.from(selected));
+    if (error) return toast.error(error.message);
+    toast.success(`Removed ${selected.size}`); setSelected(new Set()); reload();
+  }
+
+  function toggleOne(id: string) { const n = new Set(selected); n.has(id) ? n.delete(id) : n.add(id); setSelected(n); }
 
   function startCreate() { setEditing(null); setForm(empty); setOpen(true); }
   function startEdit(t: CloudTimber) {
@@ -87,29 +108,59 @@ export function TimberInventory() {
           </h1>
           <p className="text-sm text-muted-foreground mt-1">Wood species, dimensions, and per-unit pricing for the active branch.</p>
         </div>
-        {canEdit && (
-          <Button onClick={startCreate} size="lg" className="bg-timber text-timber-foreground hover:bg-timber/90">
-            <Plus className="mr-2 h-4 w-4" /> Add Timber
-          </Button>
-        )}
+        <div className="flex gap-2 flex-wrap">
+          <ExportMenu
+            filename="timber-inventory"
+            title="Timber Inventory"
+            columns={[
+              { key: "species", label: "Species" }, { key: "grade", label: "Grade" },
+              { key: "dimensions", label: "Dimensions" }, { key: "price", label: "Price" },
+              { key: "unit", label: "Per" }, { key: "pieces", label: "Pieces" },
+            ]}
+            rows={filteredItems.map((t) => ({
+              species: t.species, grade: t.grade ?? "",
+              dimensions: `${t.thickness}x${t.width} ${t.dim_unit} x ${t.length} ${t.length_unit}`,
+              price: Number(t.price_per_unit), unit: t.price_unit, pieces: Number(t.pieces),
+            }))}
+          />
+          {canEdit && (
+            <>
+              <Button variant="outline" onClick={() => setImportOpen(true)}><Sparkles className="mr-2 h-4 w-4" /> Bulk Import</Button>
+              <Button onClick={startCreate} className="bg-timber text-timber-foreground hover:bg-timber/90"><Plus className="mr-2 h-4 w-4" /> Add Timber</Button>
+            </>
+          )}
+        </div>
       </header>
+
+      <div className="flex flex-wrap gap-2 items-center">
+        <div className="relative max-w-md flex-1 min-w-[200px]">
+          <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground" />
+          <Input value={search} onChange={(e) => setSearch(e.target.value)} placeholder="Search species or grade..." className="pl-9" />
+        </div>
+        {canEdit && selected.size > 0 && (
+          <Button variant="destructive" size="sm" onClick={bulkDelete}><Trash2 className="h-4 w-4 mr-1" /> Delete {selected.size}</Button>
+        )}
+      </div>
 
       {loading ? (
         <div className="p-8 text-center text-muted-foreground"><Loader2 className="h-5 w-5 animate-spin inline mr-2" /> Loading…</div>
-      ) : items.length === 0 ? (
-        <Card className="p-8 text-center text-muted-foreground">No timber yet for this branch.</Card>
+      ) : filteredItems.length === 0 ? (
+        <Card className="p-8 text-center text-muted-foreground">No timber matches.</Card>
       ) : (
         <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
-          {items.map((t) => {
+          {filteredItems.map((t) => {
             const low = t.pieces <= t.low_stock_threshold;
             return (
               <Card key={t.id} className="p-5">
                 <div className="flex items-start justify-between mb-3">
-                  <div>
-                    <h3 className="text-lg font-bold text-foreground">{t.species}</h3>
-                    <p className="text-xs text-muted-foreground">
-                      {t.thickness}×{t.width} {t.dim_unit} · {t.length} {t.length_unit}{t.grade ? ` · Grade ${t.grade}` : ""}
-                    </p>
+                  <div className="flex items-start gap-2">
+                    {canEdit && <Checkbox checked={selected.has(t.id)} onCheckedChange={() => toggleOne(t.id)} className="mt-1" />}
+                    <div>
+                      <h3 className="text-lg font-bold text-foreground">{t.species}</h3>
+                      <p className="text-xs text-muted-foreground">
+                        {t.thickness}×{t.width} {t.dim_unit} · {t.length} {t.length_unit}{t.grade ? ` · Grade ${t.grade}` : ""}
+                      </p>
+                    </div>
                   </div>
                   <div className="text-right">
                     <div className="text-2xl font-bold text-foreground">{t.pieces}</div>
@@ -133,6 +184,10 @@ export function TimberInventory() {
             );
           })}
         </div>
+      )}
+
+      {activeBusinessId && activeBranchId && (
+        <BulkImportDialog open={importOpen} onOpenChange={setImportOpen} businessId={activeBusinessId} branchId={activeBranchId} onDone={reload} />
       )}
 
       <Dialog open={open} onOpenChange={setOpen}>
