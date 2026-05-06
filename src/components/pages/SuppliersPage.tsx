@@ -10,8 +10,10 @@ import { Textarea } from "@/components/ui/textarea";
 import {
   Dialog, DialogContent, DialogHeader, DialogTitle, DialogFooter,
 } from "@/components/ui/dialog";
-import { Truck, Plus, Pencil, Trash2, Loader2, Phone, DollarSign } from "lucide-react";
+import { Truck, Plus, Pencil, Trash2, Loader2, Phone, DollarSign, Search } from "lucide-react";
 import { toast } from "sonner";
+import { Checkbox } from "@/components/ui/checkbox";
+import { ExportMenu } from "@/components/shared/ExportMenu";
 
 interface FormState {
   name: string; contact_person: string; phone: string; email: string; address: string; notes: string;
