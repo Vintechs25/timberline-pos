@@ -32,12 +32,27 @@ export function SuppliersPage() {
   const [editing, setEditing] = useState<CloudSupplier | null>(null);
   const [form, setForm] = useState<FormState>(empty);
   const [busy, setBusy] = useState(false);
+  const [search, setSearch] = useState("");
+  const [selected, setSelected] = useState<Set<string>>(new Set());
 
   const [payOpen, setPayOpen] = useState(false);
   const [paySupplier, setPaySupplier] = useState<CloudSupplier | null>(null);
   const [payForm, setPayForm] = useState<PayState>({ amount: 0, method: "cash", reference: "", notes: "" });
 
+  const filtered = items.filter((s) => {
+    if (!search.trim()) return true;
+    const q = search.toLowerCase();
+    return s.name.toLowerCase().includes(q) || (s.phone ?? "").includes(q) || (s.contact_person ?? "").toLowerCase().includes(q);
+  });
   const totalOwed = items.reduce((s, x) => s + Number(x.balance), 0);
+
+  function toggleOne(id: string) { const n = new Set(selected); n.has(id) ? n.delete(id) : n.add(id); setSelected(n); }
+  async function bulkDelete() {
+    if (!selected.size || !confirm(`Remove ${selected.size} supplier(s)?`)) return;
+    const { error } = await supabase.from("suppliers").update({ is_active: false }).in("id", Array.from(selected));
+    if (error) return toast.error(error.message);
+    toast.success(`Removed ${selected.size}`); setSelected(new Set()); reload();
+  }
 
   function startCreate() { setEditing(null); setForm(empty); setOpen(true); }
   function startEdit(s: CloudSupplier) {
