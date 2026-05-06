@@ -178,6 +178,7 @@ export function CustomersPage() {
               <Card key={c.id} className="p-5">
                 <div className="flex items-start justify-between mb-3">
                   <div className="flex items-start gap-3">
+                    {canEdit && <Checkbox checked={selected.has(c.id)} onCheckedChange={() => toggleOne(c.id)} className="mt-2" />}
                     <div className="h-10 w-10 rounded-full bg-primary/10 flex items-center justify-center">
                       {c.type === "contractor" ? <HardHat className="h-5 w-5 text-primary" /> : <UserIcon className="h-5 w-5 text-primary" />}
                     </div>
