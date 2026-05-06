@@ -37,9 +37,27 @@ export function TimberInventory() {
   const canEdit = isBusinessAdmin || isSystemOwner;
 
   const [open, setOpen] = useState(false);
+  const [importOpen, setImportOpen] = useState(false);
   const [editing, setEditing] = useState<CloudTimber | null>(null);
   const [form, setForm] = useState<FormState>(empty);
   const [busy, setBusy] = useState(false);
+  const [search, setSearch] = useState("");
+  const [selected, setSelected] = useState<Set<string>>(new Set());
+
+  const filteredItems = items.filter((t) => {
+    if (!search.trim()) return true;
+    const q = search.toLowerCase();
+    return t.species.toLowerCase().includes(q) || (t.grade ?? "").toLowerCase().includes(q);
+  });
+
+  async function bulkDelete() {
+    if (!selected.size || !confirm(`Delete ${selected.size} item(s)?`)) return;
+    const { error } = await supabase.from("timber_products").update({ is_active: false }).in("id", Array.from(selected));
+    if (error) return toast.error(error.message);
+    toast.success(`Removed ${selected.size}`); setSelected(new Set()); reload();
+  }
+
+  function toggleOne(id: string) { const n = new Set(selected); n.has(id) ? n.delete(id) : n.add(id); setSelected(n); }
 
   function startCreate() { setEditing(null); setForm(empty); setOpen(true); }
   function startEdit(t: CloudTimber) {
