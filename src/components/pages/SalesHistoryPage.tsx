@@ -32,6 +32,7 @@ import {
   RefreshCw,
   Calendar,
 } from "lucide-react";
+import { ExportMenu } from "@/components/shared/ExportMenu";
 
 type SaleRow = {
   id: string;
