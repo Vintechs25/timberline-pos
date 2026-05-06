@@ -53,9 +53,14 @@ export function CustomersPage() {
 
   const filtered = customers.filter((c) => {
     if (c.name.toLowerCase() === "walk-in") return false;
-    if (!search.trim()) return true;
-    const q = search.toLowerCase();
-    return c.name.toLowerCase().includes(q) || (c.phone ?? "").includes(q);
+    if (search.trim()) {
+      const q = search.toLowerCase();
+      if (!(c.name.toLowerCase().includes(q) || (c.phone ?? "").includes(q))) return false;
+    }
+    if (typeFilter !== "all" && c.type !== typeFilter) return false;
+    if (balanceFilter === "owing" && Number(c.balance) <= 0) return false;
+    if (balanceFilter === "clear" && Number(c.balance) > 0) return false;
+    return true;
   });
 
   const totalOutstanding = customers.reduce((s, c) => s + Number(c.balance), 0);
