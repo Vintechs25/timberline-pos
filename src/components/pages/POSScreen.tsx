@@ -12,7 +12,7 @@ import {
   type CloudHardware,
   type CloudTimber,
 } from "@/lib/cloud-store";
-import { initiateStkPush, queryStkStatus, attachMpesaToSale } from "@/server/mpesa.functions";
+import { initiateStkPush, queryStkStatus, attachMpesaToSale } from "@/lib/mpesa.functions";
 import { useServerFn } from "@tanstack/react-start";
 import { printReceipt, downloadReceiptPDF } from "@/lib/receipt";
 import type { SaleRecord, CartItem } from "@/lib/types";
