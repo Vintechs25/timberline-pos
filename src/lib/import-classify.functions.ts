@@ -35,7 +35,7 @@ interface NormalizedItem {
 }
 
 export const classifyImportRows = createServerFn({ method: "POST" })
-  .inputValidator((d) => InputSchema.parse(d))
+  .validator((d) => InputSchema.parse(d))
   .handler(async ({ data }) => {
     const apiKey = process.env.LOVABLE_API_KEY;
     if (!apiKey) throw new Error("LOVABLE_API_KEY not set");

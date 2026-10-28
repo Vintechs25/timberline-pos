@@ -37,7 +37,7 @@ async function getToken(consumerKey: string, consumerSecret: string, env: string
 
 export const initiateStkPush = createServerFn({ method: "POST" })
   .middleware([requireSupabaseAuth])
-  .inputValidator(
+  .validator(
     z.object({
       business_id: z.string().uuid(),
       branch_id: z.string().uuid(),
@@ -122,7 +122,7 @@ export const initiateStkPush = createServerFn({ method: "POST" })
 
 export const queryStkStatus = createServerFn({ method: "POST" })
   .middleware([requireSupabaseAuth])
-  .inputValidator(z.object({ txn_id: z.string().uuid() }).parse)
+  .validator(z.object({ txn_id: z.string().uuid() }).parse)
   .handler(async ({ data, context }) => {
     const { data: txn } = await supabaseAdmin
       .from("mpesa_transactions")
@@ -186,7 +186,7 @@ export const queryStkStatus = createServerFn({ method: "POST" })
 
 export const attachMpesaToSale = createServerFn({ method: "POST" })
   .middleware([requireSupabaseAuth])
-  .inputValidator(z.object({ txn_id: z.string().uuid(), sale_id: z.string().uuid() }).parse)
+  .validator(z.object({ txn_id: z.string().uuid(), sale_id: z.string().uuid() }).parse)
   .handler(async ({ data, context }) => {
     const { data: txn } = await supabaseAdmin
       .from("mpesa_transactions")
