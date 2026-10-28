@@ -16,7 +16,7 @@ import { Checkbox } from "@/components/ui/checkbox";
 import { Badge } from "@/components/ui/badge";
 import { Loader2, Upload, Sparkles, FileSpreadsheet } from "lucide-react";
 import { parseFile, parsePasted, autoSku, parseTimberDims, parsePrice, type ParsedTable, type Row } from "@/lib/bulk-io";
-import { classifyImportRows } from "@/server/import-classify.functions";
+import { classifyImportRows } from "@/lib/import-classify.functions";
 import { supabase } from "@/integrations/supabase/client";
 import { toast } from "sonner";
 
