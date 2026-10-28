@@ -128,6 +128,10 @@ export function SystemOwnerPanel() {
           licenseDays: Number(expiresDays) || 365,
         },
       });
+      if (!res?.owner?.email || !res?.business?.license_key) {
+        toast.error("Provisioning did not complete. Please try again.");
+        return;
+      }
       toast.success("Business provisioned");
       setResult({
         email: res.owner.email,
